@@ -1,0 +1,18 @@
+{
+  "name": "horizon",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["apps/backend", "apps/frontend", "shared"],
+  "scripts": {
+    "dev": "npm run build --workspace=shared && concurrently -k -n shared,backend,frontend -c magenta,blue,green \"npm run dev --workspace=shared\" \"npm run dev --workspace=apps/backend\" \"npm run dev --workspace=apps/frontend\"",
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "dev:shared": "npm run dev --workspace=shared",
+    "build": "npm run build --workspace=shared && npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.0.0"
+  }
+}
