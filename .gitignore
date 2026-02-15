@@ -1,6 +1,17 @@
 node_modules
 dist
+**/dist
 *.tsbuildinfo
 .env
 .env.*
 .DS_Store
+*.d.ts
+*.d.ts.map
+*.js.map
+shared/src/**/*.js
+shared/src/**/*.js.map
+apps/backend/src/**/*.js
+apps/backend/src/**/*.js.map
+apps/frontend/src/**/*.js
+apps/frontend/src/**/*.js.map
+apps/frontend/vite.config.js
