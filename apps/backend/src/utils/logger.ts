@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import winston from 'winston';
 
 const timestampFormat = 'YYYY-MM-DD HH:mm:ss';

@@ -1,13 +1,11 @@
-import 'dotenv/config';
-import express from 'express';
+import { logger } from '../utils/logger';
 import cors from 'cors';
+import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { logger } from '../utils/logger';
 
 const app = express();
 
-app.use(cors);
 app.use(helmet());
 
 const allowedOrigins = process.env.CORS_ORIGIN
