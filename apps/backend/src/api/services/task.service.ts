@@ -1,4 +1,9 @@
-import { type DeleteTaskInput, type CreateTaskInput, type Task } from '@horizon/shared';
+import {
+  type DeleteTaskInput,
+  type CreateTaskInput,
+  type Task,
+  type UpdateTaskInput,
+} from '@horizon/shared';
 import mongoose from 'mongoose';
 import { logger } from '../../utils/logger';
 import { type TaskDocument } from '../models/task.model';
@@ -60,4 +65,21 @@ export const taskService = {
 
     return mapTaskDocumentToTask(deletedTask);
   },
+
+  // updating a task
+  async updateTask(input: UpdateTaskInput): Promise<Task> {
+    if (!mongoose.Types.ObjectId.isValid(input.taskId)) {
+      throw new Error('Invalid task id');
+    }
+
+    const updatedTask = await taskRepository.updateTask(input);
+
+    if (!updatedTask) {
+      throw new Error('Task not found');
+    }
+
+    return mapTaskDocumentToTask(updatedTask);
+  },
+
+  // TODO : deleting selected tasks
 };

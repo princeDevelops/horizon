@@ -3,6 +3,8 @@ import { type DeleteTaskInput, type CreateTaskInput } from '@horizon/shared';
 import { logger } from '../../utils/logger';
 import { taskService } from '../services/task.service';
 
+
+// creating a task
 export const createTask = async (
   req: Request,
   res: Response
@@ -30,6 +32,8 @@ export const createTask = async (
   }
 };
 
+
+// getting all tasks
 export const getAllTasks = async (
   req: Request,
   res: Response
@@ -55,6 +59,8 @@ export const getAllTasks = async (
   }
 };
 
+
+// deleting a task by id
 export const deleteTask = async (
   req: Request,
   res: Response
@@ -84,3 +90,35 @@ export const deleteTask = async (
     });
   }
 };
+
+// updating a task by id
+export const updateTask = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const taskIdParam = req.params.taskId;
+    const input = {
+      taskId: Array.isArray(taskIdParam) ? taskIdParam[0] : taskIdParam,
+      ...req.body,
+    };
+    logger.info('updating task with id :', input);
+    const updatedTask = await taskService.updateTask(input);
+
+    res.status(201).json({
+      success: true,
+      data: updatedTask,
+    });
+  } catch (error) {
+    logger.error('Failed to update task', error);
+
+    const message =
+      error instanceof Error ? error.message : 'Failed to update tasks';
+    const statusCode = 400;
+
+    res.status(statusCode).json({
+      success: false,
+      message,
+    });
+  }
+}
