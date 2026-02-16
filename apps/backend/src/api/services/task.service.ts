@@ -53,7 +53,7 @@ export const taskService = {
 
   // deleting a task
   async deleteTask(input: DeleteTaskInput): Promise<Task> {
-    if (!mongoose.Types.ObjectId.isValid(input.taskId)) {
+    if (!mongoose.Types.ObjectId.isValid(input.id)) {
       throw new Error('Invalid task id');
     }
 
@@ -68,7 +68,7 @@ export const taskService = {
 
   // updating a task
   async updateTask(input: UpdateTaskInput): Promise<Task> {
-    if (!mongoose.Types.ObjectId.isValid(input.taskId)) {
+    if (!mongoose.Types.ObjectId.isValid(input.id)) {
       throw new Error('Invalid task id');
     }
 

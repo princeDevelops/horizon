@@ -18,13 +18,13 @@ export const taskRepository = {
 
   // deleting a task from DB
   async deleteTask(input: DeleteTaskInput): Promise<TaskDocument | null> {
-    return await TaskModel.findByIdAndDelete(input.taskId);
+    return await TaskModel.findByIdAndDelete(input.id);
   },
 
   // updating a task in DB
   async updateTask(input: UpdateTaskInput): Promise<TaskDocument | null> {
-    const { taskId, ...updateData } = input;
-    return await TaskModel.findByIdAndUpdate(taskId, updateData, {
+    const { id, ...updateData } = input;
+    return await TaskModel.findByIdAndUpdate(id, updateData, {
       returnDocument: 'after',
     });
   },

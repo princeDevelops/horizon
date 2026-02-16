@@ -1,5 +1,9 @@
 import { type Request, type Response } from 'express';
-import { type DeleteTaskInput, type CreateTaskInput } from '@horizon/shared';
+import {
+  type DeleteTaskInput,
+  type CreateTaskInput,
+  type UpdateTaskInput,
+} from '@horizon/shared';
 import { logger } from '../../utils/logger';
 import { taskService } from '../services/task.service';
 
@@ -66,9 +70,9 @@ export const deleteTask = async (
   res: Response
 ): Promise<void> => {
   try {
-    const taskIdParam = req.params.taskId;
+    const idParam = req.params.id;
     const input: DeleteTaskInput = {
-      taskId: Array.isArray(taskIdParam) ? taskIdParam[0] : taskIdParam,
+      id: Array.isArray(idParam) ? idParam[0] : idParam,
     };
     logger.info('deleting task with id :', input);
     const deletedTask = await taskService.deleteTask(input);
@@ -97,9 +101,9 @@ export const updateTask = async (
   res: Response
 ): Promise<void> => {
   try {
-    const taskIdParam = req.params.taskId;
-    const input = {
-      taskId: Array.isArray(taskIdParam) ? taskIdParam[0] : taskIdParam,
+    const idParam = req.params.id;
+    const input: UpdateTaskInput = {
+      id: Array.isArray(idParam) ? idParam[0] : idParam,
       ...req.body,
     };
     logger.info('updating task with id :', input);

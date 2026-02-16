@@ -1,5 +1,5 @@
 export interface UpdateTaskInput {
-  taskId: string;
+  id: string;
   title?: string;
   description?: string;
   priority?: number;

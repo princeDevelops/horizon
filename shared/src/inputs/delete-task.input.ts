@@ -1,3 +1,3 @@
 export interface DeleteTaskInput {
-  taskId: string;
+  id: string;
 }

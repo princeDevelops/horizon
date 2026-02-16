@@ -10,6 +10,6 @@ const taskRoutes = Router();
 
 taskRoutes.route('/').post(createTask);
 taskRoutes.route('/').get(getAllTasks);
-taskRoutes.route('/:taskId').delete(deleteTask).patch(updateTask);
+taskRoutes.route('/:id').delete(deleteTask).patch(updateTask);
 
 export default taskRoutes;
