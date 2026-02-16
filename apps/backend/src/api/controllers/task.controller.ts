@@ -3,10 +3,10 @@ import {
   type DeleteTaskInput,
   type CreateTaskInput,
   type UpdateTaskInput,
+  type FindTaskInput,
 } from '@horizon/shared';
 import { logger } from '../../utils/logger';
 import { taskService } from '../services/task.service';
-
 
 // creating a task
 export const createTask = async (
@@ -36,7 +36,6 @@ export const createTask = async (
   }
 };
 
-
 // getting all tasks
 export const getAllTasks = async (
   req: Request,
@@ -62,7 +61,6 @@ export const getAllTasks = async (
     });
   }
 };
-
 
 // deleting a task by id
 export const deleteTask = async (
@@ -106,7 +104,8 @@ export const updateTask = async (
       id: Array.isArray(idParam) ? idParam[0] : idParam,
       ...req.body,
     };
-    logger.info('updating task with id :', input);
+    logger.info('updating task with id :', input.id);
+    logger.info('Update Payload : ', input);
     const updatedTask = await taskService.updateTask(input);
 
     res.status(201).json({
@@ -125,4 +124,33 @@ export const updateTask = async (
       message,
     });
   }
-}
+};
+
+// finding task by id
+export const findTask = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const idParam = req.params.id;
+    const input: FindTaskInput = {
+      id: Array.isArray(idParam) ? idParam[0] : idParam,
+    };
+
+    logger.info('Finding task with id : ', input.id);
+    const foundTask = await taskService.findTask(input);
+
+    res.status(201).json({
+      success: true,
+      data: foundTask,
+    });
+  } catch (error) {
+    logger.error('Failed to find task', error);
+
+    const message =
+      error instanceof Error ? error.message : 'Failed to find tasks';
+    const statusCode = 404;
+
+    res.status(statusCode).json({
+      success: false,
+      message,
+    });
+  }
+};

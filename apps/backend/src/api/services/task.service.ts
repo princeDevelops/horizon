@@ -3,6 +3,7 @@ import {
   type CreateTaskInput,
   type Task,
   type UpdateTaskInput,
+  type FindTaskInput,
 } from '@horizon/shared';
 import mongoose from 'mongoose';
 import { logger } from '../../utils/logger';
@@ -81,5 +82,19 @@ export const taskService = {
     return mapTaskDocumentToTask(updatedTask);
   },
 
+  // find task by id
+  async findTask(input: FindTaskInput): Promise<Task> {
+    if (!mongoose.Types.ObjectId.isValid(input.id)) {
+      throw new Error('Invalid task id');
+    }
+
+    const foundTask = await taskRepository.findTask(input);
+
+    if (!foundTask) {
+      throw new Error('Task not found');
+    }
+
+    return mapTaskDocumentToTask(foundTask);
+  },
   // TODO : deleting selected tasks
 };
