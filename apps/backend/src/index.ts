@@ -7,9 +7,15 @@ const PORT = process.env.PORT || 5000;
 
 const bootstrap = async () => {
   try {
-    await connectDB();
+    // Start server first, then connect DB in background
     app.listen(PORT, () => {
       logger.info(`Horizon Server is running on port ${PORT}`);
+    });
+
+    // Connect DB in background (don't block server startup)
+    connectDB().catch((error) => {
+      logger.error('Failed to connect to MongoDB:', error);
+      logger.warn('Server is running but database is not connected');
     });
   } catch (error) {
     logger.error('Error starting the server:', error);
