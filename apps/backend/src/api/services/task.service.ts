@@ -5,10 +5,10 @@ import {
   type UpdateTaskInput,
   type FindTaskInput,
 } from '@horizon/shared';
-import mongoose from 'mongoose';
 import { logger } from '../../utils/logger';
 import { type TaskDocument } from '../models/task.model';
 import { taskRepository } from '../repositories/task.repository';
+import { ErrorFactory } from '../errors/errors';
 
 const mapTaskDocumentToTask = (taskDoc: TaskDocument): Task => ({
   id: taskDoc._id.toString(),
@@ -31,12 +31,7 @@ const mapTaskDocumentToTask = (taskDoc: TaskDocument): Task => ({
 export const taskService = {
   // creating a task
   async createTask(input: CreateTaskInput): Promise<Task> {
-    const title = input.title?.trim();
-
-    if (!title) {
-      throw new Error('Title is required');
-    }
-
+    const title = input.title;
     const createdTask = await taskRepository.createTask({
       ...input,
       title,
@@ -54,14 +49,10 @@ export const taskService = {
 
   // deleting a task
   async deleteTask(input: DeleteTaskInput): Promise<Task> {
-    if (!mongoose.Types.ObjectId.isValid(input.id)) {
-      throw new Error('Invalid task id');
-    }
-
     const deletedTask = await taskRepository.deleteTask(input);
 
     if (!deletedTask) {
-      throw new Error('Task not found');
+      throw ErrorFactory.notFound('Task', input.id);
     }
 
     return mapTaskDocumentToTask(deletedTask);
@@ -69,14 +60,10 @@ export const taskService = {
 
   // updating a task
   async updateTask(input: UpdateTaskInput): Promise<Task> {
-    if (!mongoose.Types.ObjectId.isValid(input.id)) {
-      throw new Error('Invalid task id');
-    }
-
     const updatedTask = await taskRepository.updateTask(input);
 
     if (!updatedTask) {
-      throw new Error('Task not found');
+      throw ErrorFactory.notFound('Task', input.id);
     }
 
     return mapTaskDocumentToTask(updatedTask);
@@ -84,14 +71,10 @@ export const taskService = {
 
   // find task by id
   async findTask(input: FindTaskInput): Promise<Task> {
-    if (!mongoose.Types.ObjectId.isValid(input.id)) {
-      throw new Error('Invalid task id');
-    }
-
     const foundTask = await taskRepository.findTask(input);
 
     if (!foundTask) {
-      throw new Error('Task not found');
+      throw ErrorFactory.notFound('Task', input.id);
     }
 
     return mapTaskDocumentToTask(foundTask);

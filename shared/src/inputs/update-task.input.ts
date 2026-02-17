@@ -1,11 +1,13 @@
+import { type Tag, type TaskPriority, type TaskStatus } from '../types';
+
 export interface UpdateTaskInput {
   id: string;
   title?: string;
   description?: string;
-  priority?: number;
-  status?: number;
+  priority?: TaskPriority;
+  status?: TaskStatus;
   dueDate?: string;
   startDate?: string;
-  tags?: string[];
+  tags?: Tag[];
   customTags?: string[];
 }

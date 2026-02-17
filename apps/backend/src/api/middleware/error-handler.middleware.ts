@@ -26,7 +26,7 @@ export const errorHandler = (
   if (err instanceof AppError) {
     error = err;
   } else if (
-    err.name === 'MongoError' &&
+    (err.name === 'MongoError' || err.name === 'MongoServerError') &&
     'code' in err &&
     (err as any).code === 11000
   ) {

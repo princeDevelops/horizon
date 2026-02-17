@@ -1,5 +1,6 @@
 import winston from 'winston';
 import path from 'node:path';
+import util from 'node:util';
 
 const timestampFormat = 'YYYY-MM-DD HH:mm:ss';
 const colorizer = winston.format.colorize();
@@ -54,7 +55,22 @@ const consoleFormat = winston.format.printf(
     const coloredLevel = colorizer.colorize(rawLevel, lvl);
     const coloredMessage = colorizer.colorize(rawLevel, baseMessage);
     const callerText = caller ? ` [${String(caller)}]` : '';
-    const metaString = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+    const plainMeta = Object.keys(meta).reduce<Record<string, unknown>>(
+      (acc, key) => {
+        acc[key] = (meta as Record<string, unknown>)[key];
+        return acc;
+      },
+      {}
+    );
+    const hasMeta = Object.keys(plainMeta).length > 0;
+    const metaString = hasMeta
+      ? `\n${util.inspect(plainMeta, {
+          depth: null,
+          colors: false,
+          compact: false,
+          breakLength: 100,
+        })}`
+      : '';
 
     return `${ts} ${coloredLevel}${callerText}: ${coloredMessage}${metaString}`.trim();
   }

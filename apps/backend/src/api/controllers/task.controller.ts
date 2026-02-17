@@ -7,150 +7,108 @@ import {
 } from '@horizon/shared';
 import { logger } from '../../utils/logger';
 import { taskService } from '../services/task.service';
+import { asyncHandler } from '../../utils/asyncHandler';
+import {
+  validateTaskIdOrThrow,
+  validateTaskInputOrThrow,
+} from '../../utils/isInputValid';
 
 // creating a task
-export const createTask = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const input: CreateTaskInput = req.body;
-    logger.info('Creating task with input', input);
-    const task = await taskService.createTask(input);
 
-    res.status(201).json({
-      success: true,
-      data: task,
-    });
-  } catch (error) {
-    logger.error('Failed to create task', error);
+export const createTask = asyncHandler(async (req: Request, res: Response) => {
+  const input: CreateTaskInput = req.body;
 
-    const message =
-      error instanceof Error ? error.message : 'Failed to create task';
-    const statusCode = message === 'Title is required' ? 400 : 500;
+  validateTaskInputOrThrow(input, 'create');
 
-    res.status(statusCode).json({
-      success: false,
-      message,
-    });
-  }
-};
+  logger.info('Creating task with input', { input });
+  // Create task
+  const task = await taskService.createTask(input);
 
-// getting all tasks
-export const getAllTasks = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
+  // Send response
+  res.status(201).json({
+    success: true,
+    message: 'Task created successfully',
+    data: task,
+  });
+});
+
+// Getting all tasks
+export const getAllTasks = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
     const allTasks = await taskService.getAllTasks();
 
-    res.status(201).json({
+    // log the tasks
+    logger.info('Fetched all tasks', { tasks : allTasks });
+
+    res.status(200).json({
       success: true,
+      message: 'Tasks fetched successfully',
       data: allTasks,
     });
-  } catch (error) {
-    logger.error('Failed to get all tasks', error);
-
-    const message =
-      error instanceof Error ? error.message : 'Failed to get all tasks';
-    const statusCode = 404;
-
-    res.status(statusCode).json({
-      success: false,
-      message,
-    });
   }
-};
+);
 
 // deleting a task by id
-export const deleteTask = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
+export const deleteTask = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
     const idParam = req.params.id;
+
     const input: DeleteTaskInput = {
       id: Array.isArray(idParam) ? idParam[0] : idParam,
     };
-    logger.info('deleting task with id :', input);
+
+    validateTaskIdOrThrow(input.id);
+
+    logger.info('Deleting task', { id: input.id });
     const deletedTask = await taskService.deleteTask(input);
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
+      message: 'Task deleted successfully',
       data: deletedTask,
     });
-  } catch (error) {
-    logger.error('Failed to delete task', error);
-
-    const message =
-      error instanceof Error ? error.message : 'Failed to delete tasks';
-    const statusCode = 400;
-
-    res.status(statusCode).json({
-      success: false,
-      message,
-    });
   }
-};
+);
 
 // updating a task by id
-export const updateTask = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
+export const updateTask = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
     const idParam = req.params.id;
+
     const input: UpdateTaskInput = {
       id: Array.isArray(idParam) ? idParam[0] : idParam,
       ...req.body,
     };
-    logger.info('updating task with id :', input.id);
-    logger.info('Update Payload : ', input);
+
+    validateTaskIdOrThrow(input.id);
+    validateTaskInputOrThrow(input, 'update');
+
+    logger.info('Updating task', { id: input.id });
+    logger.info('Update payload', { input });
     const updatedTask = await taskService.updateTask(input);
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       data: updatedTask,
     });
-  } catch (error) {
-    logger.error('Failed to update task', error);
-
-    const message =
-      error instanceof Error ? error.message : 'Failed to update tasks';
-    const statusCode = 400;
-
-    res.status(statusCode).json({
-      success: false,
-      message,
-    });
   }
-};
+);
 
 // finding task by id
-export const findTask = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const idParam = req.params.id;
-    const input: FindTaskInput = {
-      id: Array.isArray(idParam) ? idParam[0] : idParam,
-    };
+export const findTask = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const idParam = req.params.id;
 
-    logger.info('Finding task with id : ', input.id);
-    const foundTask = await taskService.findTask(input);
+  const input: FindTaskInput = {
+    id: Array.isArray(idParam) ? idParam[0] : idParam,
+  };
 
-    res.status(201).json({
-      success: true,
-      data: foundTask,
-    });
-  } catch (error) {
-    logger.error('Failed to find task', error);
+  validateTaskIdOrThrow(input.id);
 
-    const message =
-      error instanceof Error ? error.message : 'Failed to find tasks';
-    const statusCode = 404;
+  logger.info('Finding task', { id: input.id });
+  const foundTask = await taskService.findTask(input);
 
-    res.status(statusCode).json({
-      success: false,
-      message,
-    });
-  }
-};
+  res.status(200).json({
+    success: true,
+    data: foundTask,
+  });
+});

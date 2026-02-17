@@ -4,6 +4,7 @@ import express from 'express';
 import helmet from 'helmet';
 import taskRoutes from './routes/task.routes';
 import morgan from 'morgan';
+import { errorHandler } from './middleware/error-handler.middleware';
 
 const app = express();
 
@@ -11,7 +12,7 @@ app.use(helmet());
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
-  : ['http://localhost:5173', 'http://localhost:5000']; 
+  : ['http://localhost:5173', 'http://localhost:5000'];
 
 app.use(
   cors({
@@ -46,5 +47,6 @@ app.get('/api/v1/health', (_req, res) => {
 });
 
 app.use('/api/v1/tasks', taskRoutes);
+app.use(errorHandler);
 
 export default app;
