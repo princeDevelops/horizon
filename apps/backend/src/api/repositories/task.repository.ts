@@ -35,5 +35,12 @@ export const taskRepository = {
     return await TaskModel.findById(input.id);
   },
 
-  // TODO : deleting selected tasks from DB
+
+  // deleting selected tasks from DB -> returning count and list of deleted tasks
+  async deleteSelectedTasks( ids: DeleteTaskInput[]) : Promise<{ deletedCount: number, deletedTasks: TaskDocument[]}>{
+    const toBeDeletedIds = ids.map(taskId=> taskId.id);
+    const deletedTasks = await TaskModel.find({ _id: { $in: toBeDeletedIds } });
+    const result = await TaskModel.deleteMany({ _id: { $in: toBeDeletedIds } });
+    return { deletedCount: result.deletedCount || 0, deletedTasks };
+  }
 };

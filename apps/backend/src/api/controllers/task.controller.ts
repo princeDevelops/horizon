@@ -12,6 +12,7 @@ import {
   validateTaskIdOrThrow,
   validateTaskInputOrThrow,
 } from '../../utils/isInputValid';
+import { ErrorFactory } from '../errors/errors';
 
 // creating a task
 
@@ -38,7 +39,7 @@ export const getAllTasks = asyncHandler(
     const allTasks = await taskService.getAllTasks();
 
     // log the tasks
-    logger.info('Fetched all tasks', { tasks : allTasks });
+    logger.info('Fetched all tasks', { tasks: allTasks });
 
     res.status(200).json({
       success: true,
@@ -95,20 +96,67 @@ export const updateTask = asyncHandler(
 );
 
 // finding task by id
-export const findTask = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const idParam = req.params.id;
+export const findTask = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const idParam = req.params.id;
 
-  const input: FindTaskInput = {
-    id: Array.isArray(idParam) ? idParam[0] : idParam,
-  };
+    const input: FindTaskInput = {
+      id: Array.isArray(idParam) ? idParam[0] : idParam,
+    };
 
-  validateTaskIdOrThrow(input.id);
+    validateTaskIdOrThrow(input.id);
 
-  logger.info('Finding task', { id: input.id });
-  const foundTask = await taskService.findTask(input);
+    logger.info('Finding task', { id: input.id });
+    const foundTask = await taskService.findTask(input);
 
-  res.status(200).json({
-    success: true,
-    data: foundTask,
-  });
-});
+    res.status(200).json({
+      success: true,
+      data: foundTask,
+    });
+  }
+);
+
+// deleting selected tasks by ids
+export const deleteSelectedTasks = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const idsParam = req.body.ids;
+
+    if (!Array.isArray(idsParam) || idsParam.length === 0) {
+      throw ErrorFactory.validation(
+        'ids must be a non-empty array',
+        'ids',
+        'ERR_TASK_IDS_REQUIRED'
+      );
+    }
+
+    if (!idsParam.every((id) => typeof id === 'string')) {
+      throw ErrorFactory.validation(
+        'all ids must be strings',
+        'ids',
+        'ERR_TASK_IDS_INVALID_TYPE'
+      );
+    }
+
+    const ids: DeleteTaskInput[] = idsParam.map((id: string) => ({
+      id: id.trim(),
+    }));
+
+    // validate each id
+    ids.forEach((taskId) => validateTaskIdOrThrow(taskId.id));
+
+    // handling duplicate ids -> merge the duplicates
+
+    const uniqueIds: DeleteTaskInput[] = Array.from(
+      new Map(ids.map((item) => [item.id, item])).values()
+    );
+
+    const { deletedCount, deletedTasks } =
+      await taskService.deleteSelectedTasks(uniqueIds);
+
+    res.status(200).json({
+      success: true,
+      message: `${deletedCount} task(s) deleted successfully`,
+      data: deletedTasks,
+    });
+  }
+);

@@ -80,4 +80,27 @@ export const taskService = {
     return mapTaskDocumentToTask(foundTask);
   },
   // TODO : deleting selected tasks
+  async deleteSelectedTasks(
+    ids: DeleteTaskInput[]
+  ): Promise<{ deletedCount: number; deletedTasks: Task[] }> {
+    const { deletedCount, deletedTasks } =
+      await taskRepository.deleteSelectedTasks(ids);
+
+    // checking if any tasks were deleted
+    if (deletedCount === 0) {
+      throw ErrorFactory.notFound('Tasks', ids.map((id) => id.id).join(', '));
+    }
+
+    // log the count of deleted tasks and their ids and objects
+    logger.info('Deleted selected tasks', {
+      deletedCount,
+      deletedTaskIds: deletedTasks.map((task) => task._id.toString()),
+      deletedTasks,
+    });
+
+    return {
+      deletedCount,
+      deletedTasks: deletedTasks.map(mapTaskDocumentToTask),
+    };
+  },
 };
