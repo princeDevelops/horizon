@@ -5,11 +5,13 @@ import helmet from 'helmet';
 import taskRoutes from './routes/task.routes';
 import morgan from 'morgan';
 import { errorHandler } from './middleware/error-handler.middleware';
+import { query } from 'winston';
 
 const app = express();
 
-app.use(helmet());
 
+app.set('query parser', 'extended');
+app.use(helmet());
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
   : ['http://localhost:5173', 'http://localhost:5000'];

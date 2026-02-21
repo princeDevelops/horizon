@@ -1,14 +1,14 @@
 import {
-  type DeleteTaskInput,
   type CreateTaskInput,
+  type DeleteTaskInput,
+  type FindTaskInput,
   type Task,
   type UpdateTaskInput,
-  type FindTaskInput,
 } from '@horizon/shared';
 import { logger } from '../../utils/logger';
-import { type TaskDocument } from '../models/task.model';
-import { taskRepository } from '../repositories/task.repository';
 import { ErrorFactory } from '../errors/errors';
+import { TaskModel, type TaskDocument } from '../models/task.model';
+import { taskRepository } from '../repositories/task.repository';
 
 const mapTaskDocumentToTask = (taskDoc: TaskDocument): Task => ({
   id: taskDoc._id.toString(),
@@ -41,10 +41,30 @@ export const taskService = {
   },
 
   // getting all the tasks
-  async getAllTasks(): Promise<Task[]> {
-    const allTasks = await taskRepository.getAllTasks();
-    logger.info('Fetched tasks', { count: allTasks.length });
-    return allTasks.map(mapTaskDocumentToTask);
+  async getAllTasks({
+    filter,
+    sort,
+    page,
+    limit,
+  }: {
+    filter: Record<string, unknown>;
+    sort?: Record<string, 1 | -1 | 'asc' | 'desc'>;
+    page: number;
+    limit: number;
+  }): Promise<Task[]> {
+    const skip = (page - 1) * limit;
+
+    logger.info('MongoDB query executing', { filter, sort, skip, limit });
+
+    const tasks = await TaskModel.find(filter as any)
+      .sort(sort ?? { createdAt: 'desc' })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    logger.info('MongoDB query completed', { taskCount: tasks.length });
+
+    return tasks.map(mapTaskDocumentToTask);
   },
 
   // deleting a task
