@@ -8,6 +8,8 @@ export interface UpdateTaskInput {
   status?: TaskStatus;
   dueDate?: string;
   startDate?: string;
+  isArchived?: boolean;
+  isPinned?: boolean;
   tags?: Tag[];
   customTags?: string[];
 }

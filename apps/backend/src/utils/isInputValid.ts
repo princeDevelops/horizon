@@ -168,4 +168,22 @@ export const validateTaskInputOrThrow = (
       'ERR_CUSTOM_TAGS_INVALID_TYPE'
     );
   }
+
+  // check for pinned field and ensure it's a boolean if provided
+  if (hasValue(input.isPinned) && typeof input.isPinned !== 'boolean') {
+    throw ErrorFactory.validation(
+      'Pinned must be a boolean',
+      'isPinned',
+      'ERR_PINNED_INVALID_TYPE'
+    );
+  }
+
+  // check for archived field and ensure it's a boolean if provided
+  if (hasValue(input.isArchived) && typeof input.isArchived !== 'boolean') {
+    throw ErrorFactory.validation(
+      'Archived must be a boolean',
+      'isArchived',
+      'ERR_ARCHIVED_INVALID_TYPE'
+    );
+  }
 };
