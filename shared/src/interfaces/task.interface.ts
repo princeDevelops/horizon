@@ -14,7 +14,6 @@ export interface Task {
   dueDate?: string;
   startDate?: string;
   finishedAt?: string;
-  deletedAt?: string;
 
   isArchived: boolean;
   isPinned?: boolean;

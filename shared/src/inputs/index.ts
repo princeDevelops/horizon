@@ -1,5 +1,4 @@
 export * from './create-task.input';
 export * from './delete-task.input';
 export * from './update-task.input';
-export * from './find-task.input';
 export * from './filter-tasks.input';

@@ -1,7 +1,6 @@
 import {
   type CreateTaskInput,
   type DeleteTaskInput,
-  type FindTaskInput,
   GetTasksQuery,
   type UpdateTaskInput,
 } from '@horizon/shared';
@@ -101,27 +100,6 @@ export const updateTask = asyncHandler(
     res.status(200).json({
       success: true,
       data: updatedTask,
-    });
-  }
-);
-
-// finding task by id
-export const findTask = asyncHandler(
-  async (req: Request, res: Response): Promise<void> => {
-    const idParam = req.params.id;
-
-    const input: FindTaskInput = {
-      id: Array.isArray(idParam) ? idParam[0] : idParam,
-    };
-
-    validateTaskIdOrThrow(input.id);
-
-    logger.info('Finding task', { id: input.id });
-    const foundTask = await taskService.findTask(input);
-
-    res.status(200).json({
-      success: true,
-      data: foundTask,
     });
   }
 );

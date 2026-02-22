@@ -1,5 +1,4 @@
 import {
-  type FindTaskInput,
   type CreateTaskInput,
   type DeleteTaskInput,
   type UpdateTaskInput,
@@ -29,12 +28,6 @@ export const taskRepository = {
       returnDocument: 'after',
     });
   },
-
-  // find task by id
-  async findTask(input: FindTaskInput): Promise<TaskDocument | null> {
-    return await TaskModel.findById(input.id);
-  },
-
 
   // deleting selected tasks from DB -> returning count and list of deleted tasks
   async deleteSelectedTasks( ids: DeleteTaskInput[]) : Promise<{ deletedCount: number, deletedTasks: TaskDocument[]}>{

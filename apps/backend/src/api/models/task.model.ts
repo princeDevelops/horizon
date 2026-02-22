@@ -38,9 +38,6 @@ const TaskSchema = new mongoose.Schema<TaskDocument>(
     finishedAt: {
       type: String,
     },
-    deletedAt: {
-      type: String,
-    },
     isArchived: {
       type: Boolean,
       default: false,

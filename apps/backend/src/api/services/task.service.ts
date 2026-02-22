@@ -1,7 +1,6 @@
 import {
   type CreateTaskInput,
   type DeleteTaskInput,
-  type FindTaskInput,
   type Task,
   type UpdateTaskInput,
 } from '@horizon/shared';
@@ -21,7 +20,6 @@ const mapTaskDocumentToTask = (taskDoc: TaskDocument): Task => ({
   dueDate: taskDoc.dueDate,
   startDate: taskDoc.startDate,
   finishedAt: taskDoc.finishedAt,
-  deletedAt: taskDoc.deletedAt,
   isArchived: taskDoc.isArchived,
   isPinned: taskDoc.isPinned,
   tags: taskDoc.tags,
@@ -89,16 +87,6 @@ export const taskService = {
     return mapTaskDocumentToTask(updatedTask);
   },
 
-  // find task by id
-  async findTask(input: FindTaskInput): Promise<Task> {
-    const foundTask = await taskRepository.findTask(input);
-
-    if (!foundTask) {
-      throw ErrorFactory.notFound('Task', input.id);
-    }
-
-    return mapTaskDocumentToTask(foundTask);
-  },
   // TODO : deleting selected tasks
   async deleteSelectedTasks(
     ids: DeleteTaskInput[]
