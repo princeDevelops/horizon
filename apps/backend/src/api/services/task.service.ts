@@ -1,4 +1,5 @@
 import {
+  TASK_STATUS,
   type CreateTaskInput,
   type DeleteTaskInput,
   type Task,
@@ -78,7 +79,26 @@ export const taskService = {
 
   // updating a task
   async updateTask(input: UpdateTaskInput): Promise<Task> {
-    const updatedTask = await taskRepository.updateTask(input);
+    const existingTask = await taskRepository.findTaskById(input.id);
+    if (!existingTask) throw ErrorFactory.notFound('Task', input.id);
+
+    const nextInput = { ...input };
+    let unsetFinishedAt = false;
+
+    if (
+      input.status === TASK_STATUS.COMPLETED &&
+      existingTask.status !== TASK_STATUS.COMPLETED
+    ) {
+      nextInput.finishedAt = new Date().toISOString();
+    }
+
+    if (input.status && input.status !== TASK_STATUS.COMPLETED) {
+      unsetFinishedAt = true;
+    }
+
+    const updatedTask = await taskRepository.updateTask(nextInput, {
+      unsetFinishedAt,
+    });
 
     if (!updatedTask) {
       throw ErrorFactory.notFound('Task', input.id);

@@ -10,6 +10,7 @@ export interface UpdateTaskInput {
   startDate?: string;
   isArchived?: boolean;
   isPinned?: boolean;
+  finishedAt?: string;
   tags?: Tag[];
   customTags?: string[];
 }
