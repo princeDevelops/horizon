@@ -4,15 +4,17 @@ import {
   GetTasksQuery,
   type UpdateTaskInput,
 } from '@horizon/shared';
+import type { BulkUpdateTaskFlagsInput } from '@horizon/shared/inputs/bulk-update-task-flags.input';
 import { type Request, type Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import {
+  validateBulkUpdateTaskFlagsInputOrThrow,
   validateTaskIdOrThrow,
+  validateTaskIdsOrThrow,
   validateTaskInputOrThrow,
 } from '../../utils/isInputValid';
 import { logger } from '../../utils/logger';
 import { TaskFilters } from '../../utils/task.filters';
-import { ErrorFactory } from '../errors/errors';
 import { taskService } from '../services/task.service';
 
 // creating a task
@@ -107,36 +109,9 @@ export const updateTask = asyncHandler(
 // deleting selected tasks by ids
 export const deleteSelectedTasks = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const idsParam = req.body.ids;
-
-    if (!Array.isArray(idsParam) || idsParam.length === 0) {
-      throw ErrorFactory.validation(
-        'ids must be a non-empty array',
-        'ids',
-        'ERR_TASK_IDS_REQUIRED'
-      );
-    }
-
-    if (!idsParam.every((id) => typeof id === 'string')) {
-      throw ErrorFactory.validation(
-        'all ids must be strings',
-        'ids',
-        'ERR_TASK_IDS_INVALID_TYPE'
-      );
-    }
-
-    const ids: DeleteTaskInput[] = idsParam.map((id: string) => ({
-      id: id.trim(),
-    }));
-
-    // validate each id
-    ids.forEach((taskId) => validateTaskIdOrThrow(taskId.id));
-
-    // handling duplicate ids -> merge the duplicates
-
-    const uniqueIds: DeleteTaskInput[] = Array.from(
-      new Map(ids.map((item) => [item.id, item])).values()
-    );
+    const uniqueIds: DeleteTaskInput[] = validateTaskIdsOrThrow(
+      req.body.ids
+    ).map((id) => ({ id }));
 
     const { deletedCount, deletedTasks } =
       await taskService.deleteSelectedTasks(uniqueIds);
@@ -145,6 +120,25 @@ export const deleteSelectedTasks = asyncHandler(
       success: true,
       message: `${deletedCount} task(s) deleted successfully`,
       data: deletedTasks,
+    });
+  }
+);
+
+// bulk update task flags (archive/unarchive, pin/unpin)
+export const updateTaskFlagsBulk = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const input: BulkUpdateTaskFlagsInput =
+      validateBulkUpdateTaskFlagsInputOrThrow(
+        req.body as BulkUpdateTaskFlagsInput
+      );
+
+    const { modifiedCount, updatedTasks } =
+      await taskService.updateTaskFlagsBulk(input);
+
+    res.status(200).json({
+      success: true,
+      message: `${modifiedCount} task(s) updated successfully`,
+      data: updatedTasks,
     });
   }
 );

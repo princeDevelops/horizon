@@ -9,6 +9,7 @@ import {
   type Tag,
   type UpdateTaskInput,
 } from '@horizon/shared';
+import type { BulkUpdateTaskFlagsInput } from '@horizon/shared/inputs/bulk-update-task-flags.input';
 import mongoose from 'mongoose';
 import { ErrorFactory } from '../api/errors/errors';
 
@@ -186,4 +187,75 @@ export const validateTaskInputOrThrow = (
       'ERR_ARCHIVED_INVALID_TYPE'
     );
   }
+};
+
+export const validateTaskIdsOrThrow = (ids: unknown): string[] => {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw ErrorFactory.validation(
+      'ids must be a non-empty array',
+      'ids',
+      'ERR_TASK_IDS_REQUIRED'
+    );
+  }
+
+  if (!ids.every((id) => typeof id === 'string')) {
+    throw ErrorFactory.validation(
+      'all ids must be strings',
+      'ids',
+      'ERR_TASK_IDS_INVALID_TYPE'
+    );
+  }
+
+  const trimmedIds = ids.map((id) => id.trim()).filter((id) => id.length > 0);
+
+  if (trimmedIds.length === 0) {
+    throw ErrorFactory.validation(
+      'ids must contain at least one valid task id',
+      'ids',
+      'ERR_TASK_IDS_REQUIRED'
+    );
+  }
+
+  trimmedIds.forEach((id) => validateTaskIdOrThrow(id));
+
+  return Array.from(new Set(trimmedIds));
+};
+
+export const validateBulkUpdateTaskFlagsInputOrThrow = (
+  input: BulkUpdateTaskFlagsInput
+): BulkUpdateTaskFlagsInput => {
+  const ids = validateTaskIdsOrThrow(input.ids);
+
+  const hasPinned = hasValue(input.isPinned);
+  const hasArchived = hasValue(input.isArchived);
+
+  if (!hasPinned && !hasArchived) {
+    throw ErrorFactory.validation(
+      'At least one of isPinned or isArchived must be provided',
+      'isPinned',
+      'ERR_TASK_FLAGS_REQUIRED'
+    );
+  }
+
+  if (hasPinned && typeof input.isPinned !== 'boolean') {
+    throw ErrorFactory.validation(
+      'Pinned must be a boolean',
+      'isPinned',
+      'ERR_PINNED_INVALID_TYPE'
+    );
+  }
+
+  if (hasArchived && typeof input.isArchived !== 'boolean') {
+    throw ErrorFactory.validation(
+      'Archived must be a boolean',
+      'isArchived',
+      'ERR_ARCHIVED_INVALID_TYPE'
+    );
+  }
+
+  return {
+    ids,
+    ...(hasPinned ? { isPinned: input.isPinned } : {}),
+    ...(hasArchived ? { isArchived: input.isArchived } : {}),
+  };
 };

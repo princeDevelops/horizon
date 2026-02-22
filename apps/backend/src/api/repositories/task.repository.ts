@@ -57,4 +57,36 @@ export const taskRepository = {
     const result = await TaskModel.deleteMany({ _id: { $in: toBeDeletedIds } });
     return { deletedCount: result.deletedCount || 0, deletedTasks };
   },
+
+  async bulkUpdateTaskFlags(
+    ids: string[],
+    flags: { isArchived?: boolean; isPinned?: boolean }
+  ): Promise<{
+    matchedCount: number;
+    modifiedCount: number;
+    updatedTasks: TaskDocument[];
+  }> {
+    const updateData: { isArchived?: boolean; isPinned?: boolean } = {};
+
+    if (typeof flags.isArchived === 'boolean') {
+      updateData.isArchived = flags.isArchived;
+    }
+
+    if (typeof flags.isPinned === 'boolean') {
+      updateData.isPinned = flags.isPinned;
+    }
+
+    const result = await TaskModel.updateMany(
+      { _id: { $in: ids } },
+      { $set: updateData }
+    );
+
+    const updatedTasks = await TaskModel.find({ _id: { $in: ids } });
+
+    return {
+      matchedCount: result.matchedCount || 0,
+      modifiedCount: result.modifiedCount || 0,
+      updatedTasks,
+    };
+  },
 };

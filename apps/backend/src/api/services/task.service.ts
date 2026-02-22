@@ -4,7 +4,9 @@ import {
   type DeleteTaskInput,
   type Task,
   type UpdateTaskInput,
+  type BulkUpdateTaskFlagsInput,
 } from '@horizon/shared';
+
 import { logger } from '../../utils/logger';
 import { ErrorFactory } from '../errors/errors';
 import { TaskModel, type TaskDocument } from '../models/task.model';
@@ -131,4 +133,26 @@ export const taskService = {
       deletedTasks: deletedTasks.map(mapTaskDocumentToTask),
     };
   },
+
+  // bulk updating task flags (isArchived, isPinned)
+  async updateTaskFlagsBulk(
+    input: BulkUpdateTaskFlagsInput
+  ): Promise<{ modifiedCount: number; updatedTasks: Task[] }> {
+    const { ids, isArchived, isPinned } = input;
+
+    const { matchedCount, modifiedCount, updatedTasks } =
+      await taskRepository.bulkUpdateTaskFlags(ids, {
+        isArchived,
+        isPinned,
+      });
+
+    if (matchedCount === 0) {
+      throw ErrorFactory.notFound('Tasks', ids.join(', '));
+    }
+
+    return {
+      modifiedCount,
+      updatedTasks: updatedTasks.map(mapTaskDocumentToTask),
+    };
+  }
 };
