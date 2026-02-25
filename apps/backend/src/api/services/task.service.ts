@@ -8,6 +8,7 @@ import {
 } from '@horizon/shared';
 
 import { logger } from '../../utils/logger';
+import { validateTaskDateRangeOrThrow } from '../../utils/isInputValid';
 import { ErrorFactory } from '../errors/errors';
 import { TaskModel, type TaskDocument } from '../models/task.model';
 import { taskRepository } from '../repositories/task.repository';
@@ -83,6 +84,11 @@ export const taskService = {
   async updateTask(input: UpdateTaskInput): Promise<Task> {
     const existingTask = await taskRepository.findTaskById(input.id);
     if (!existingTask) throw ErrorFactory.notFound('Task', input.id);
+
+    validateTaskDateRangeOrThrow(
+      input.startDate ?? existingTask.startDate,
+      input.dueDate ?? existingTask.dueDate
+    );
 
     const nextInput = { ...input };
     let unsetFinishedAt = false;
