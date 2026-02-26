@@ -3,3 +3,7 @@ export * from './delete-task.input';
 export * from './update-task.input';
 export * from './filter-tasks.input';
 export * from './bulk-update-task-flags.input';
+export * from './signup.input';
+export * from './login.input';
+export * from './refresh-token.input';
+export * from './oauth-callback.input';

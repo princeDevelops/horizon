@@ -10,11 +10,15 @@ export interface TaskDocument extends TaskPersistence, Document {
 
 const TaskSchema = new mongoose.Schema<TaskDocument>(
   {
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
     title: {
       type: String,
       required: true,
       trim: true,
-      unique: true,
     },
     status: {
       type: String,

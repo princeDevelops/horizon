@@ -14,6 +14,7 @@ import { TaskModel, type TaskDocument } from '../models/task.model';
 import { taskRepository } from '../repositories/task.repository';
 
 const mapTaskDocumentToTask = (taskDoc: TaskDocument): Task => ({
+  userId: taskDoc.userId.toString(),
   id: taskDoc._id.toString(),
   title: taskDoc.title,
   status: taskDoc.status,
@@ -160,5 +161,5 @@ export const taskService = {
       modifiedCount,
       updatedTasks: updatedTasks.map(mapTaskDocumentToTask),
     };
-  }
+  },
 };

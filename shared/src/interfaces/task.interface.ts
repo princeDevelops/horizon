@@ -3,6 +3,7 @@ import { TaskStatus } from '../types/task-status.type';
 import { Tag } from '../types/task-tag.type';
 
 export interface Task {
+  userId : string;
   id: string;
   title: string;
   status: TaskStatus;
