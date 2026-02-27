@@ -1,5 +1,6 @@
 import { TaskPriority, TaskStatus, Tag } from '../types';
 export interface CreateTaskInput {
+  userId: string;
   title: string;
   description?: string;
   priority?: TaskPriority;

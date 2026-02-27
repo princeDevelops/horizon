@@ -1,13 +1,14 @@
-export const JWT_PAYLOAD_KEYS = {
-  USER_ID: 'userId',
-  EMAIL: 'email',
-  ROLE: 'role',
-  PROVIDER: 'provider',
-} as const;
+import type { UserRole } from './user-role.type';
 
-export type JwtPayload = {
-  [JWT_PAYLOAD_KEYS.USER_ID]: string;
-  [JWT_PAYLOAD_KEYS.EMAIL]: string;
-  [JWT_PAYLOAD_KEYS.ROLE]: string;
-  [JWT_PAYLOAD_KEYS.PROVIDER]: string;
+export type AccessTokenPayload = {
+  userId: string;
+  email: string;
+  role: UserRole;
+  tokenVersion: number;
+};
+
+export type RefreshTokenPayload = {
+  userId: string;
+  sessionId: string;
+  tokenVersion: number;
 };

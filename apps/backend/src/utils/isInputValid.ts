@@ -64,11 +64,7 @@ const validateDateOrderOrThrow = (
   dueDate?: string
 ): void => {
   if (!hasValue(startDate) || !hasValue(dueDate)) {
-    throw ErrorFactory.validation(
-      'Both startDate and dueDate must be provided to validate date order',
-      'startDate/dueDate',
-      'ERR_DATE_ORDER_VALIDATION_FAILED'
-    );
+    return;
   }
 
   const parsedStartDate = parseDateOrThrow(startDate, 'startDate');
@@ -112,6 +108,27 @@ export const validateTaskInputOrThrow = (
   let parsedDueDate: Date | undefined;
   let parsedStartDate: Date | undefined;
   const titleRequired = mode === 'create';
+  const userIdRequired = mode === 'create';
+
+  if (userIdRequired) {
+    const userId = (input as CreateTaskInput).userId;
+
+    if (!isNonEmptyString(userId)) {
+      throw ErrorFactory.validation(
+        'userId is required',
+        'userId',
+        'ERR_USER_ID_REQUIRED'
+      );
+    }
+
+    if (!isValidMongoId(userId)) {
+      throw ErrorFactory.validation(
+        'Invalid userId format',
+        'userId',
+        'ERR_INVALID_USER_ID_FORMAT'
+      );
+    }
+  }
 
   if (titleRequired && !isNonEmptyString(input.title)) {
     throw ErrorFactory.validation(

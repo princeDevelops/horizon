@@ -5,12 +5,12 @@ import helmet from 'helmet';
 import taskRoutes from './routes/task.routes';
 import morgan from 'morgan';
 import { errorHandler } from './middleware/error-handler.middleware';
-import { query } from 'winston';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 
-
 app.set('query parser', 'extended');
+app.use(cookieParser());
 app.use(helmet());
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
