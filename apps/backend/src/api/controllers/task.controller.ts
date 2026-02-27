@@ -12,21 +12,33 @@ import {
   validateTaskIdOrThrow,
   validateTaskIdsOrThrow,
   validateTaskInputOrThrow,
-} from '../../utils/isInputValid';
+} from '../../utils/validation';
 import { logger } from '../../utils/logger';
 import { TaskFilters } from '../../utils/task.filters';
+import { ErrorFactory } from '../errors/errors';
 import { taskService } from '../services/task.service';
+
+const getAuthenticatedUserOrThrow = (req: Request) => {
+  if (!req.user) throw ErrorFactory.unauthorized('Authentication required');
+  return req.user;
+};
 
 // creating a task
 
 export const createTask = asyncHandler(async (req: Request, res: Response) => {
-  const input: CreateTaskInput = req.body;
+  const authUser = getAuthenticatedUserOrThrow(req);
+
+  // We always trust userId from token, not from request body.
+  const input: CreateTaskInput = {
+    ...req.body,
+    userId: authUser.userId,
+  };
 
   validateTaskInputOrThrow(input, 'create');
 
   logger.info('Creating task with input', { input });
   // Create task
-  const task = await taskService.createTask(input);
+  const task = await taskService.createTask(input, authUser.userId);
 
   // Send response
   res.status(201).json({
@@ -39,6 +51,8 @@ export const createTask = asyncHandler(async (req: Request, res: Response) => {
 // Getting all tasks
 export const getAllTasks = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    const authUser = getAuthenticatedUserOrThrow(req);
+
     const tf = new TaskFilters(req.query as unknown as GetTasksQuery);
 
     const { filter, sort } = { filter: tf.getFilter(), sort: tf.getSort() };
@@ -47,7 +61,13 @@ export const getAllTasks = asyncHandler(
     const filterLog = { rawQuery: req.query, filter, sort, page, limit };
     logger.info('Task filters applied', filterLog);
 
-    const tasks = await taskService.getAllTasks({ filter, sort, page, limit });
+    const tasks = await taskService.getAllTasks({
+      userId: authUser.userId,
+      filter,
+      sort,
+      page,
+      limit,
+    });
 
     // log the tasks
     logger.info('Fetched all tasks', { tasks: tasks });
@@ -63,6 +83,8 @@ export const getAllTasks = asyncHandler(
 // deleting a task by id
 export const deleteTask = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    const authUser = getAuthenticatedUserOrThrow(req);
+
     const idParam = req.params.id;
 
     const input: DeleteTaskInput = {
@@ -72,7 +94,7 @@ export const deleteTask = asyncHandler(
     validateTaskIdOrThrow(input.id);
 
     logger.info('Deleting task', { id: input.id });
-    const deletedTask = await taskService.deleteTask(input);
+    const deletedTask = await taskService.deleteTask(input, authUser.userId);
 
     res.status(200).json({
       success: true,
@@ -85,6 +107,8 @@ export const deleteTask = asyncHandler(
 // updating a task by id
 export const updateTask = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    const authUser = getAuthenticatedUserOrThrow(req);
+
     const idParam = req.params.id;
 
     const input: UpdateTaskInput = {
@@ -97,7 +121,7 @@ export const updateTask = asyncHandler(
 
     logger.info('Updating task', { id: input.id });
     logger.info('Update payload', { input });
-    const updatedTask = await taskService.updateTask(input);
+    const updatedTask = await taskService.updateTask(input, authUser.userId);
 
     res.status(200).json({
       success: true,
@@ -109,12 +133,14 @@ export const updateTask = asyncHandler(
 // deleting selected tasks by ids
 export const deleteSelectedTasks = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    const authUser = getAuthenticatedUserOrThrow(req);
+
     const uniqueIds: DeleteTaskInput[] = validateTaskIdsOrThrow(
       req.body.ids
     ).map((id) => ({ id }));
 
     const { deletedCount, deletedTasks } =
-      await taskService.deleteSelectedTasks(uniqueIds);
+      await taskService.deleteSelectedTasks(uniqueIds, authUser.userId);
 
     res.status(200).json({
       success: true,
@@ -127,13 +153,15 @@ export const deleteSelectedTasks = asyncHandler(
 // bulk update task flags (archive/unarchive, pin/unpin)
 export const updateTaskFlagsBulk = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    const authUser = getAuthenticatedUserOrThrow(req);
+
     const input: BulkUpdateTaskFlagsInput =
       validateBulkUpdateTaskFlagsInputOrThrow(
         req.body as BulkUpdateTaskFlagsInput
       );
 
     const { modifiedCount, updatedTasks } =
-      await taskService.updateTaskFlagsBulk(input);
+      await taskService.updateTaskFlagsBulk(input, authUser.userId);
 
     res.status(200).json({
       success: true,

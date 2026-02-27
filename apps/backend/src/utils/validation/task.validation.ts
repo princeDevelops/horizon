@@ -9,20 +9,15 @@ import {
   type Tag,
   type UpdateTaskInput,
 } from '@horizon/shared';
-import type { BulkUpdateTaskFlagsInput } from '@horizon/shared/inputs/bulk-update-task-flags.input';
-import mongoose from 'mongoose';
-import { ErrorFactory } from '../api/errors/errors';
+import { ErrorFactory } from '../../api/errors/errors';
+import {
+  enumValues,
+  hasValue,
+  isNonEmptyString,
+  isValidMongoId,
+} from './common.validation';
 
 type TaskValidationMode = 'create' | 'update';
-
-const hasValue = (value: unknown): boolean =>
-  value !== undefined && value !== null;
-
-const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === 'string' && value.trim().length > 0;
-
-const enumValues = <T extends string>(obj: Record<string, T>): T[] =>
-  Object.values(obj);
 
 const parseDateOrThrow = (
   value: unknown,
@@ -59,10 +54,7 @@ const parseDateOrThrow = (
   return parsedDate;
 };
 
-const validateDateOrderOrThrow = (
-  startDate?: string,
-  dueDate?: string
-): void => {
+const validateDateOrderOrThrow = (startDate?: string, dueDate?: string): void => {
   if (!hasValue(startDate) || !hasValue(dueDate)) {
     return;
   }
@@ -79,17 +71,9 @@ const validateDateOrderOrThrow = (
   }
 };
 
-const isValidMongoId = (id: string): boolean => {
-  return mongoose.Types.ObjectId.isValid(id);
-};
-
 export const validateTaskIdOrThrow = (id: string): void => {
   if (!isNonEmptyString(id)) {
-    throw ErrorFactory.validation(
-      'Task ID is required',
-      'id',
-      'ERR_TASK_ID_REQUIRED'
-    );
+    throw ErrorFactory.validation('Task ID is required', 'id', 'ERR_TASK_ID_REQUIRED');
   }
 
   if (!isValidMongoId(id)) {
@@ -131,11 +115,7 @@ export const validateTaskInputOrThrow = (
   }
 
   if (titleRequired && !isNonEmptyString(input.title)) {
-    throw ErrorFactory.validation(
-      'Title is required',
-      'title',
-      'ERR_TITLE_REQUIRED'
-    );
+    throw ErrorFactory.validation('Title is required', 'title', 'ERR_TITLE_REQUIRED');
   }
 
   if (hasValue(input.title)) {
@@ -148,11 +128,7 @@ export const validateTaskInputOrThrow = (
     }
 
     if (input.title.trim().length === 0) {
-      throw ErrorFactory.validation(
-        'Title cannot be empty',
-        'title',
-        'ERR_TITLE_EMPTY'
-      );
+      throw ErrorFactory.validation('Title cannot be empty', 'title', 'ERR_TITLE_EMPTY');
     }
 
     if (input.title.length < TASK_CONSTRAINTS.TITLE_MIN_LENGTH) {
@@ -228,11 +204,7 @@ export const validateTaskInputOrThrow = (
     parsedDueDate = parseDateOrThrow(input.dueDate, 'dueDate');
   }
 
-  if (
-    mode === 'create' &&
-    parsedDueDate &&
-    parsedDueDate.getTime() < Date.now()
-  ) {
+  if (mode === 'create' && parsedDueDate && parsedDueDate.getTime() < Date.now()) {
     throw ErrorFactory.validation(
       'dueDate cannot be in the past for new tasks',
       'dueDate',
@@ -312,7 +284,6 @@ export const validateTaskInputOrThrow = (
     }
   }
 
-  // check for pinned field and ensure it's a boolean if provided
   if (hasValue(input.isPinned) && typeof input.isPinned !== 'boolean') {
     throw ErrorFactory.validation(
       'Pinned must be a boolean',
@@ -321,7 +292,6 @@ export const validateTaskInputOrThrow = (
     );
   }
 
-  // check for archived field and ensure it's a boolean if provided
   if (hasValue(input.isArchived) && typeof input.isArchived !== 'boolean') {
     throw ErrorFactory.validation(
       'Archived must be a boolean',
@@ -331,10 +301,7 @@ export const validateTaskInputOrThrow = (
   }
 };
 
-export const validateTaskDateRangeOrThrow = (
-  startDate?: string,
-  dueDate?: string
-): void => {
+export const validateTaskDateRangeOrThrow = (startDate?: string, dueDate?: string): void => {
   validateDateOrderOrThrow(startDate, dueDate);
 };
 
@@ -370,41 +337,3 @@ export const validateTaskIdsOrThrow = (ids: unknown): string[] => {
   return Array.from(new Set(trimmedIds));
 };
 
-export const validateBulkUpdateTaskFlagsInputOrThrow = (
-  input: BulkUpdateTaskFlagsInput
-): BulkUpdateTaskFlagsInput => {
-  const ids = validateTaskIdsOrThrow(input.ids);
-
-  const hasPinned = hasValue(input.isPinned);
-  const hasArchived = hasValue(input.isArchived);
-
-  if (!hasPinned && !hasArchived) {
-    throw ErrorFactory.validation(
-      'At least one of isPinned or isArchived must be provided',
-      'isPinned',
-      'ERR_TASK_FLAGS_REQUIRED'
-    );
-  }
-
-  if (hasPinned && typeof input.isPinned !== 'boolean') {
-    throw ErrorFactory.validation(
-      'Pinned must be a boolean',
-      'isPinned',
-      'ERR_PINNED_INVALID_TYPE'
-    );
-  }
-
-  if (hasArchived && typeof input.isArchived !== 'boolean') {
-    throw ErrorFactory.validation(
-      'Archived must be a boolean',
-      'isArchived',
-      'ERR_ARCHIVED_INVALID_TYPE'
-    );
-  }
-
-  return {
-    ids,
-    ...(hasPinned ? { isPinned: input.isPinned } : {}),
-    ...(hasArchived ? { isArchived: input.isArchived } : {}),
-  };
-};

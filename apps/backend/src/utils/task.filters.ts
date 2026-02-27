@@ -8,7 +8,7 @@ import {
 } from '@horizon/shared';
 import type { Filter } from 'mongodb';
 import { Types } from 'mongoose';
-import { TaskDocument } from '../api/models/task.model';
+import type { TaskDocument } from '../api/models/task.model';
 
 type StringOrArray = string | string[] | undefined;
 type TaskFilter = Filter<TaskDocument>;

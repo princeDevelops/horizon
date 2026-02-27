@@ -7,8 +7,12 @@ import {
   deleteSelectedTasks,
   updateTaskFlagsBulk,
 } from '../controllers/task.controller';
+import { requireAuth } from '../middleware/auth.middleware';
 
 const taskRoutes = Router();
+
+// All task routes are private now; user must be logged in.
+taskRoutes.use(requireAuth);
 
 taskRoutes.route('/').post(createTask);
 taskRoutes.route('/').get(getAllTasks);

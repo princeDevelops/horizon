@@ -8,7 +8,7 @@ import {
 } from '@horizon/shared';
 
 import { logger } from '../../utils/logger';
-import { validateTaskDateRangeOrThrow } from '../../utils/isInputValid';
+import { validateTaskDateRangeOrThrow } from '../../utils/validation';
 import { ErrorFactory } from '../errors/errors';
 import { TaskModel, type TaskDocument } from '../models/task.model';
 import { taskRepository } from '../repositories/task.repository';
@@ -33,10 +33,11 @@ const mapTaskDocumentToTask = (taskDoc: TaskDocument): Task => ({
 
 export const taskService = {
   // creating a task
-  async createTask(input: CreateTaskInput): Promise<Task> {
+  async createTask(input: CreateTaskInput, userId: string): Promise<Task> {
     const title = input.title;
     const createdTask = await taskRepository.createTask({
       ...input,
+      userId,
       title,
     });
 
@@ -45,21 +46,24 @@ export const taskService = {
 
   // getting all the tasks
   async getAllTasks({
+    userId,
     filter,
     sort,
     page,
     limit,
   }: {
+    userId: string;
     filter: Record<string, unknown>;
     sort?: Record<string, 1 | -1 | 'asc' | 'desc'>;
     page: number;
     limit: number;
   }): Promise<Task[]> {
     const skip = (page - 1) * limit;
+    const queryFilter = { ...filter, userId };
 
-    logger.info('MongoDB query executing', { filter, sort, skip, limit });
+    logger.info('MongoDB query executing', { filter: queryFilter, sort, skip, limit });
 
-    const tasks = await TaskModel.find(filter as any)
+    const tasks = await TaskModel.find(queryFilter as any)
       .sort(sort ?? { createdAt: 'desc' })
       .skip(skip)
       .limit(limit)
@@ -71,8 +75,8 @@ export const taskService = {
   },
 
   // deleting a task
-  async deleteTask(input: DeleteTaskInput): Promise<Task> {
-    const deletedTask = await taskRepository.deleteTask(input);
+  async deleteTask(input: DeleteTaskInput, userId: string): Promise<Task> {
+    const deletedTask = await taskRepository.deleteTask(input, userId);
 
     if (!deletedTask) {
       throw ErrorFactory.notFound('Task', input.id);
@@ -82,8 +86,8 @@ export const taskService = {
   },
 
   // updating a task
-  async updateTask(input: UpdateTaskInput): Promise<Task> {
-    const existingTask = await taskRepository.findTaskById(input.id);
+  async updateTask(input: UpdateTaskInput, userId: string): Promise<Task> {
+    const existingTask = await taskRepository.findTaskById(input.id, userId);
     if (!existingTask) throw ErrorFactory.notFound('Task', input.id);
 
     validateTaskDateRangeOrThrow(
@@ -105,7 +109,7 @@ export const taskService = {
       unsetFinishedAt = true;
     }
 
-    const updatedTask = await taskRepository.updateTask(nextInput, {
+    const updatedTask = await taskRepository.updateTask(nextInput, userId, {
       unsetFinishedAt,
     });
 
@@ -118,10 +122,11 @@ export const taskService = {
 
   // TODO : deleting selected tasks
   async deleteSelectedTasks(
-    ids: DeleteTaskInput[]
+    ids: DeleteTaskInput[],
+    userId: string
   ): Promise<{ deletedCount: number; deletedTasks: Task[] }> {
     const { deletedCount, deletedTasks } =
-      await taskRepository.deleteSelectedTasks(ids);
+      await taskRepository.deleteSelectedTasks(ids, userId);
 
     // checking if any tasks were deleted
     if (deletedCount === 0) {
@@ -143,12 +148,13 @@ export const taskService = {
 
   // bulk updating task flags (isArchived, isPinned)
   async updateTaskFlagsBulk(
-    input: BulkUpdateTaskFlagsInput
+    input: BulkUpdateTaskFlagsInput,
+    userId: string
   ): Promise<{ modifiedCount: number; updatedTasks: Task[] }> {
     const { ids, isArchived, isPinned } = input;
 
     const { matchedCount, modifiedCount, updatedTasks } =
-      await taskRepository.bulkUpdateTaskFlags(ids, {
+      await taskRepository.bulkUpdateTaskFlags(ids, userId, {
         isArchived,
         isPinned,
       });

@@ -9,7 +9,7 @@ export const OAUTH_CONFIG = {
     CLIENT_ID: getEnv('GOOGLE_CLIENT_ID'),
     CLIENT_SECRET: getEnv('GOOGLE_CLIENT_SECRET'),
     CALLBACK_URL: getEnv('GOOGLE_CALLBACK_URL'),
-    TOKEN_URL: 'https://outh2.googleapis.com/token',
+    TOKEN_URL: 'https://oauth2.googleapis.com/token',
     USERINFO_URL: 'https://www.googleapis.com/oauth2/v2/userinfo',
     AUTH_URL: 'https://accounts.google.com/o/oauth2/v2/auth',
   },

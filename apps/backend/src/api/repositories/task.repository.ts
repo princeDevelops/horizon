@@ -11,19 +11,18 @@ export const taskRepository = {
     return await TaskModel.create(input);
   },
 
-  // getting all tasks from DB
-  async getAllTasks(): Promise<TaskDocument[]> {
-    return await TaskModel.find();
-  },
-
   // deleting a task from DB
-  async deleteTask(input: DeleteTaskInput): Promise<TaskDocument | null> {
-    return await TaskModel.findByIdAndDelete(input.id);
+  async deleteTask(
+    input: DeleteTaskInput,
+    userId: string
+  ): Promise<TaskDocument | null> {
+    return await TaskModel.findOneAndDelete({ _id: input.id, userId });
   },
 
   // updating a task in DB
   async updateTask(
     input: UpdateTaskInput,
+    userId: string,
     options?: { unsetFinishedAt?: boolean }
   ): Promise<TaskDocument | null> {
     const { id, ...updateData } = input;
@@ -38,28 +37,33 @@ export const taskRepository = {
       updateQuery.$unset = { finishedAt: 1 };
     }
 
-    return await TaskModel.findByIdAndUpdate(id, updateQuery, {
+    return await TaskModel.findOneAndUpdate({ _id: id, userId }, updateQuery, {
       returnDocument: 'after',
     });
   },
 
   // find a task by id
-  async findTaskById(id: string): Promise<TaskDocument | null> {
-    return await TaskModel.findById(id);
+  async findTaskById(id: string, userId: string): Promise<TaskDocument | null> {
+    return await TaskModel.findOne({ _id: id, userId });
   },
 
   // deleting selected tasks from DB -> returning count and list of deleted tasks
   async deleteSelectedTasks(
-    ids: DeleteTaskInput[]
+    ids: DeleteTaskInput[],
+    userId: string
   ): Promise<{ deletedCount: number; deletedTasks: TaskDocument[] }> {
     const toBeDeletedIds = ids.map((taskId) => taskId.id);
-    const deletedTasks = await TaskModel.find({ _id: { $in: toBeDeletedIds } });
-    const result = await TaskModel.deleteMany({ _id: { $in: toBeDeletedIds } });
+    const deletedTasks = await TaskModel.find({
+      _id: { $in: toBeDeletedIds },
+      userId,
+    });
+    const result = await TaskModel.deleteMany({ _id: { $in: toBeDeletedIds }, userId });
     return { deletedCount: result.deletedCount || 0, deletedTasks };
   },
 
   async bulkUpdateTaskFlags(
     ids: string[],
+    userId: string,
     flags: { isArchived?: boolean; isPinned?: boolean }
   ): Promise<{
     matchedCount: number;
@@ -77,11 +81,11 @@ export const taskRepository = {
     }
 
     const result = await TaskModel.updateMany(
-      { _id: { $in: ids } },
+      { _id: { $in: ids }, userId },
       { $set: updateData }
     );
 
-    const updatedTasks = await TaskModel.find({ _id: { $in: ids } });
+    const updatedTasks = await TaskModel.find({ _id: { $in: ids }, userId });
 
     return {
       matchedCount: result.matchedCount || 0,
