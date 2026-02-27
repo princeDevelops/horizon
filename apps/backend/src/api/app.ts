@@ -4,6 +4,7 @@ import express from 'express';
 import helmet from 'helmet';
 import taskRoutes from './routes/task.routes';
 import authRoutes from './routes/auth.routes';
+import healthRoutes from './routes/health.routes';
 import morgan from 'morgan';
 import { errorHandler } from './middleware/error-handler.middleware';
 import cookieParser from 'cookie-parser';
@@ -45,10 +46,7 @@ app.use(
   })
 );
 
-app.get('/api/v1/health', (_req, res) => {
-  res.status(200).json({ ok: true, message: 'Server is responding' });
-});
-
+app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/tasks', taskRoutes);
 app.use(errorHandler);
