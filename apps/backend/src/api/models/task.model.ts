@@ -1,13 +1,16 @@
 import { TAG, TASK_PRIORITY, TASK_STATUS, type Task } from '@horizon/shared';
 import mongoose, { type Document } from 'mongoose';
 
+/** Task shape persisted in MongoDB (excluding virtual/derived fields). */
 type TaskPersistence = Omit<Task, 'id' | 'createdAt' | 'updatedAt'>;
 
+/** Mongoose task document contract with Date timestamps. */
 export interface TaskDocument extends TaskPersistence, Document {
   createdAt: Date;
   updatedAt: Date;
 }
 
+/** Task collection schema with enum and default constraints. */
 const TaskSchema = new mongoose.Schema<TaskDocument>(
   {
     userId: {
@@ -63,4 +66,5 @@ const TaskSchema = new mongoose.Schema<TaskDocument>(
   { timestamps: true }
 );
 
+/** Mongoose model for CRUD operations on tasks. */
 export const TaskModel = mongoose.model<TaskDocument>('Task', TaskSchema);

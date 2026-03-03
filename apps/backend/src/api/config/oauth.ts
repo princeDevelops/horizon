@@ -1,3 +1,4 @@
+/** Reads a required OAuth environment variable and throws if missing. */
 const getEnv = (key: string): string => {
   const value = process.env[key];
   if (!value) throw new Error(`Missing required env var : ${key}`);

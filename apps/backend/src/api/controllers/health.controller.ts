@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 
 const startedAt = new Date();
 
+/** Maps Mongoose connection state code to a readable status string. */
 const getMongoState = () => {
   switch (mongoose.connection.readyState) {
     case 0:
@@ -18,6 +19,7 @@ const getMongoState = () => {
   }
 };
 
+/** Liveness endpoint: process is running. */
 export const healthLive = (_req: Request, res: Response): void => {
   res.status(200).json({
     ok: true,
@@ -28,6 +30,7 @@ export const healthLive = (_req: Request, res: Response): void => {
   });
 };
 
+/** Readiness endpoint: dependencies (currently database) are ready. */
 export const healthReady = (_req: Request, res: Response): void => {
   const mongoState = getMongoState();
   const isReady = mongoState === 'connected';
@@ -41,4 +44,3 @@ export const healthReady = (_req: Request, res: Response): void => {
     now: new Date().toISOString(),
   });
 };
-

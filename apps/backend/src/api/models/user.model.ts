@@ -1,13 +1,16 @@
 import mongoose, { type Document } from 'mongoose';
 import { type User, USER_ROLES, AUTH_PROVIDERS } from '@horizon/shared';
 
+/** User shape persisted in MongoDB (excluding virtual/derived fields). */
 type UserPersistence = Omit<User, 'id' | 'createdAt' | 'updatedAt'>;
 
+/** Mongoose user document contract with Date timestamps. */
 export interface UserDocument extends UserPersistence, Document {
   createdAt: Date;
   updatedAt: Date;
 }
 
+/** User collection schema covering local and OAuth-based accounts. */
 const UserSchema = new mongoose.Schema<UserDocument>(
   {
     email: {
@@ -66,9 +69,11 @@ const UserSchema = new mongoose.Schema<UserDocument>(
   { timestamps: true }
 );
 
+/** Enforces uniqueness for provider identity pairs when present. */
 UserSchema.index(
   { 'providers.provider': 1, 'providers.providerUserId': 1 },
   { unique: true, sparse: true }
 );
 
+/** Mongoose model for CRUD operations on users. */
 export const UserModel = mongoose.model<UserDocument>('User', UserSchema);

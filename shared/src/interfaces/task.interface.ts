@@ -2,8 +2,9 @@ import { TaskPriority } from '../types/task-priority.type';
 import { TaskStatus } from '../types/task-status.type';
 import { Tag } from '../types/task-tag.type';
 
+/** task shape shared across backend and client. */
 export interface Task {
-  userId : string;
+  userId: string;
   id: string;
   title: string;
   status: TaskStatus;

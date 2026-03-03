@@ -1,5 +1,6 @@
 import { TaskPriority, TaskStatus, Tag } from '../types';
 
+/** Fields that can be used in task list sorting. */
 export type TaskSortBy =
   | 'createdAt'
   | 'updatedAt'
@@ -9,53 +10,69 @@ export type TaskSortBy =
   | 'status'
   | 'title';
 
+/** Direction for task list sorting. */
 export type SortOrder = 'asc' | 'desc';
 
 /**
- * All date fields are expected as ISO 8601 strings.
- * Semantics: *From = inclusive lower bound, *To = inclusive upper bound.
+ * Query model for task listing endpoints.
+ * Date fields expect ISO 8601 strings; `*From`/`*To` are inclusive bounds.
  */
 export interface GetTasksQuery {
-  // status/priority can be single or multi-select
+  /** Single or multi-select status filter. */
   status?: TaskStatus | TaskStatus[];
+  /** Single or multi-select priority filter. */
   priority?: TaskPriority | TaskPriority[];
 
-  // flags (tri‑state: true/false/undefined)
+  /** Optional archive flag filter. */
   isArchived?: boolean;
+  /** Optional pin flag filter. */
   isPinned?: boolean;
 
-  // tags can be single or multi
+  /** Single or multi-select predefined tag filter. */
   tags?: Tag | Tag[];
+  /** Single or multi-select custom tag filter. */
   customTags?: string | string[];
 
-  // free-text search
+  /** Case-insensitive free-text search across indexed fields. */
   search?: string;
 
-  // date range filters (inclusive)
+  /** Inclusive due date lower bound. */
   dueFrom?: string;
+  /** Inclusive due date upper bound. */
   dueTo?: string;
+  /** Inclusive start date lower bound. */
   startFrom?: string;
+  /** Inclusive start date upper bound. */
   startTo?: string;
+  /** Inclusive created date lower bound. */
   createdFrom?: string;
+  /** Inclusive created date upper bound. */
   createdTo?: string;
+  /** Inclusive updated date lower bound. */
   updatedFrom?: string;
+  /** Inclusive updated date upper bound. */
   updatedTo?: string;
+  /** Inclusive finished date lower bound. */
   finishedFrom?: string;
+  /** Inclusive finished date upper bound. */
   finishedTo?: string;
 
-  // sorting
+  /** Field-based sort key. */
   sortBy?: TaskSortBy;
+  /** Sort direction. */
   sortOrder?: SortOrder;
   /**
-   * Optional raw sort input like "dueDate:desc"; server can normalize to sortBy/sortOrder.
+   * Optional raw sort input, e.g. `dueDate:desc`.
    */
   sort?: string;
 
-  // optional explicit set of IDs to fetch
+  /** Optional single task id filter. */
   id?: string;
+  /** Optional multi-id filter. */
   ids?: string | string[];
 
-  // pagination ( page=1, limit=10 by default )
+  /** 1-based page number. */
   page?: number;
+  /** Page size. */
   limit?: number;
 }

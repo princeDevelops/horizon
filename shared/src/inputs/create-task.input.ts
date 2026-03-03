@@ -1,4 +1,6 @@
 import { TaskPriority, TaskStatus, Tag } from '../types';
+
+/** Payload contract for creating a new task. */
 export interface CreateTaskInput {
   userId: string;
   title: string;

@@ -3,6 +3,7 @@ import { ErrorFactory } from '../../api/errors/errors';
 import { hasValue } from './common.validation';
 import { validateTaskIdsOrThrow } from './task.validation';
 
+/** Validates payload for bulk task flag updates. */
 export const validateBulkUpdateTaskFlagsInputOrThrow = (
   input: BulkUpdateTaskFlagsInput
 ): BulkUpdateTaskFlagsInput => {
@@ -41,4 +42,3 @@ export const validateBulkUpdateTaskFlagsInputOrThrow = (
     ...(hasArchived ? { isArchived: input.isArchived } : {}),
   };
 };
-

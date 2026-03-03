@@ -11,7 +11,7 @@ import { requireAuth } from '../middleware/auth.middleware';
 
 const taskRoutes = Router();
 
-// All task routes are private now; user must be logged in.
+/** All task routes require authentication. */
 taskRoutes.use(requireAuth);
 
 taskRoutes.route('/').post(createTask);

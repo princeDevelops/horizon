@@ -1,4 +1,6 @@
 import { UserRole, AuthProvider } from '../types';
+
+/** Canonical user shape shared across backend and client. */
 export interface User {
   id: string;
   email: string;
@@ -14,7 +16,8 @@ export interface User {
   isEmailVerified: boolean;
   tokenVersion: number;
 
-  // Timestamps
+  /** ISO timestamp when the user was created. */
   createdAt: string;
+  /** ISO timestamp of the last user update. */
   updatedAt: string;
 }

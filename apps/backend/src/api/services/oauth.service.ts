@@ -7,6 +7,7 @@ import { ErrorFactory } from '../errors/errors';
 import { OAUTH_CONFIG } from '../config/oauth';
 import { authService } from './auth.service';
 import { UserModel } from '../models/user.model';
+import { logger } from '../../utils/logger';
 
 type RequestMeta = {
   userAgent?: string;
@@ -20,12 +21,15 @@ type OAuthProfile = {
   avatarUrl?: string;
 };
 
+/** Creates a short-lived random state token for OAuth CSRF protection. */
 const randomState = (): string =>
   `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export const oauthService = {
+  /** Builds provider authorization URL and returns it with resolved state. */
   buildAuthorizationUrl(provider: AuthProvider, state?: string) {
     const nextState = state ?? randomState();
+    logger.info('Building OAuth authorization URL', { provider });
 
     if (provider === AUTH_PROVIDERS.GOOGLE) {
       const cfg = OAUTH_CONFIG.GOOGLE;
@@ -55,13 +59,16 @@ export const oauthService = {
     throw ErrorFactory.badRequest('Unsupported OAuth provider', 'ERR_UNSUPPORTED_PROVIDER');
   },
 
+  /** Exchanges provider callback code, upserts user, and issues app tokens. */
   async handleCallback(provider: AuthProvider, code: string, meta?: RequestMeta) {
+    logger.info('Handling OAuth callback', { provider });
     const profile = await this.fetchProviderProfile(provider, code);
 
     const email = profile.email.trim().toLowerCase();
     let user = await UserModel.findOne({ email });
 
     if (!user) {
+      logger.info('Creating new user from OAuth profile', { provider, email });
       user = await UserModel.create({
         email,
         name: profile.name,
@@ -78,6 +85,10 @@ export const oauthService = {
       );
 
       if (!linkedProvider) {
+        logger.info('Linking OAuth provider to existing user', {
+          provider,
+          userId: user._id.toString(),
+        });
         user.providers.push({
           provider,
           providerUserId: profile.providerUserId,
@@ -87,6 +98,7 @@ export const oauthService = {
       if (!user.name && profile.name) user.name = profile.name;
       if (!user.avatarUrl && profile.avatarUrl) user.avatarUrl = profile.avatarUrl;
       await user.save();
+      logger.info('OAuth user profile updated', { userId: user._id.toString() });
     }
 
     return authService.issueSessionTokens(
@@ -99,7 +111,9 @@ export const oauthService = {
     );
   },
 
+  /** Resolves provider-specific profile retrieval based on provider name. */
   async fetchProviderProfile(provider: AuthProvider, code: string): Promise<OAuthProfile> {
+    logger.info('Fetching OAuth provider profile', { provider });
     if (provider === AUTH_PROVIDERS.GOOGLE) {
       return this.fetchGoogleProfile(code);
     }
@@ -111,8 +125,10 @@ export const oauthService = {
     throw ErrorFactory.badRequest('Unsupported OAuth provider', 'ERR_UNSUPPORTED_PROVIDER');
   },
 
+  /** Exchanges Google auth code for user profile details. */
   async fetchGoogleProfile(code: string): Promise<OAuthProfile> {
     const cfg = OAUTH_CONFIG.GOOGLE;
+    logger.info('Starting Google OAuth token exchange');
 
     const tokenRes = await fetch(cfg.TOKEN_URL, {
       method: 'POST',
@@ -127,11 +143,13 @@ export const oauthService = {
     });
 
     if (!tokenRes.ok) {
+      logger.warn('Google token exchange failed', { status: tokenRes.status });
       throw ErrorFactory.unauthorized('Google token exchange failed', 'ERR_GOOGLE_TOKEN');
     }
 
     const tokenData = (await tokenRes.json()) as { access_token?: string };
     if (!tokenData.access_token) {
+      logger.warn('Google token exchange missing access token');
       throw ErrorFactory.unauthorized('Google access token missing', 'ERR_GOOGLE_TOKEN');
     }
 
@@ -140,8 +158,10 @@ export const oauthService = {
     });
 
     if (!profileRes.ok) {
+      logger.warn('Google profile fetch failed', { status: profileRes.status });
       throw ErrorFactory.unauthorized('Google profile fetch failed', 'ERR_GOOGLE_PROFILE');
     }
+    logger.info('Google profile fetched successfully');
 
     const profile = (await profileRes.json()) as {
       id: string;
@@ -158,8 +178,10 @@ export const oauthService = {
     };
   },
 
+  /** Exchanges GitHub auth code for user profile details. */
   async fetchGithubProfile(code: string): Promise<OAuthProfile> {
     const cfg = OAUTH_CONFIG.GITHUB;
+    logger.info('Starting GitHub OAuth token exchange');
 
     const tokenRes = await fetch(cfg.TOKEN_URL, {
       method: 'POST',
@@ -176,11 +198,13 @@ export const oauthService = {
     });
 
     if (!tokenRes.ok) {
+      logger.warn('GitHub token exchange failed', { status: tokenRes.status });
       throw ErrorFactory.unauthorized('GitHub token exchange failed', 'ERR_GITHUB_TOKEN');
     }
 
     const tokenData = (await tokenRes.json()) as { access_token?: string };
     if (!tokenData.access_token) {
+      logger.warn('GitHub token exchange missing access token');
       throw ErrorFactory.unauthorized('GitHub access token missing', 'ERR_GITHUB_TOKEN');
     }
 
@@ -192,8 +216,10 @@ export const oauthService = {
     });
 
     if (!profileRes.ok) {
+      logger.warn('GitHub profile fetch failed', { status: profileRes.status });
       throw ErrorFactory.unauthorized('GitHub profile fetch failed', 'ERR_GITHUB_PROFILE');
     }
+    logger.info('GitHub profile fetched successfully');
 
     const profile = (await profileRes.json()) as {
       id: number;
@@ -211,4 +237,3 @@ export const oauthService = {
     };
   },
 };
-

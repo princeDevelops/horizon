@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import { logger } from '../../utils/logger';
+
+// Initializes MongoDB connection using Mongoose with error handling and logging.
 export const connectDB = async () => {
   const MONGO_URI =
     process.env.MONGO_URI || 'mongodb://localhost:27017/horizon';

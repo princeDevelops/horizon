@@ -1,3 +1,4 @@
+/** Validation and sizing limits used by task APIs. */
 export const TASK_CONSTRAINTS = {
   TITLE_MAX_LENGTH: 50,
   TITLE_MIN_LENGTH: 1,

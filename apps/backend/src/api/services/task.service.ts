@@ -13,6 +13,7 @@ import { ErrorFactory } from '../errors/errors';
 import { TaskModel, type TaskDocument } from '../models/task.model';
 import { taskRepository } from '../repositories/task.repository';
 
+/** Maps a Mongoose task document to the API task contract. */
 const mapTaskDocumentToTask = (taskDoc: TaskDocument): Task => ({
   userId: taskDoc.userId.toString(),
   id: taskDoc._id.toString(),
@@ -32,7 +33,7 @@ const mapTaskDocumentToTask = (taskDoc: TaskDocument): Task => ({
 });
 
 export const taskService = {
-  // creating a task
+  /** Creates a task for the authenticated user. */
   async createTask(input: CreateTaskInput, userId: string): Promise<Task> {
     const title = input.title;
     const createdTask = await taskRepository.createTask({
@@ -44,7 +45,7 @@ export const taskService = {
     return mapTaskDocumentToTask(createdTask);
   },
 
-  // getting all the tasks
+  /** Returns paginated tasks for a user using filter and sort options. */
   async getAllTasks({
     userId,
     filter,
@@ -74,7 +75,7 @@ export const taskService = {
     return tasks.map(mapTaskDocumentToTask);
   },
 
-  // deleting a task
+  /** Deletes a single task by id for the authenticated user. */
   async deleteTask(input: DeleteTaskInput, userId: string): Promise<Task> {
     const deletedTask = await taskRepository.deleteTask(input, userId);
 
@@ -85,7 +86,7 @@ export const taskService = {
     return mapTaskDocumentToTask(deletedTask);
   },
 
-  // updating a task
+  /** Updates a task and derives completion timestamps from status transitions. */
   async updateTask(input: UpdateTaskInput, userId: string): Promise<Task> {
     const existingTask = await taskRepository.findTaskById(input.id, userId);
     if (!existingTask) throw ErrorFactory.notFound('Task', input.id);
@@ -120,7 +121,7 @@ export const taskService = {
     return mapTaskDocumentToTask(updatedTask);
   },
 
-  // TODO : deleting selected tasks
+  /** Deletes multiple tasks and returns the deleted records. */
   async deleteSelectedTasks(
     ids: DeleteTaskInput[],
     userId: string
@@ -128,12 +129,10 @@ export const taskService = {
     const { deletedCount, deletedTasks } =
       await taskRepository.deleteSelectedTasks(ids, userId);
 
-    // checking if any tasks were deleted
     if (deletedCount === 0) {
       throw ErrorFactory.notFound('Tasks', ids.map((id) => id.id).join(', '));
     }
 
-    // log the count of deleted tasks and their ids and objects
     logger.info('Deleted selected tasks', {
       deletedCount,
       deletedTaskIds: deletedTasks.map((task) => task._id.toString()),
@@ -146,7 +145,7 @@ export const taskService = {
     };
   },
 
-  // bulk updating task flags (isArchived, isPinned)
+  /** Applies bulk archive/pin flag updates for the provided task ids. */
   async updateTaskFlagsBulk(
     input: BulkUpdateTaskFlagsInput,
     userId: string

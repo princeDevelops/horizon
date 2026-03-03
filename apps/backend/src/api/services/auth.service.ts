@@ -11,16 +11,18 @@ import { ErrorFactory } from '../errors/errors';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../config/jwt';
 import { SessionModel } from '../models/session.model';
 import { UserModel } from '../models/user.model';
+import { logger } from '../../utils/logger';
 
 type RequestMeta = {
   userAgent?: string;
   ipAddress?: string;
 };
 
+/** Hashes refresh tokens before persisting them in storage. */
 const hashRefreshToken = (token: string): string =>
   crypto.createHash('sha256').update(token).digest('hex');
 
-// Keep response user object clean and avoid leaking passwordHash.
+/** Builds the public-safe user payload returned by auth endpoints. */
 const toPublicUser = (user: any) => ({
   id: user._id.toString(),
   email: user.email,
@@ -34,11 +36,20 @@ const toPublicUser = (user: any) => ({
   updatedAt: user.updatedAt?.toISOString(),
 });
 
+/** Normalizes email for case-insensitive lookup and uniqueness checks. */
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+/** Masks email before writing it to logs. */
+const maskEmail = (email: string): string => {
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return 'invalid-email';
+  return `${local.slice(0, 2)}${'*'.repeat(Math.max(1, local.length - 2))}@${domain}`;
+};
 
 export const authService = {
+  /** Registers a user and issues initial session tokens. */
   async signup(input: SignUpInput, meta?: RequestMeta) {
     const email = normalizeEmail(input.email);
+    logger.info('Auth service signup started', { email: maskEmail(email) });
 
     if (!input.password || input.password.length < 8) {
       throw ErrorFactory.validation(
@@ -50,6 +61,7 @@ export const authService = {
 
     const existingUser = await UserModel.findOne({ email });
     if (existingUser) {
+      logger.warn('Signup blocked: email already exists', { email: maskEmail(email) });
       throw ErrorFactory.conflict('Email is already registered', 'ERR_EMAIL_EXISTS');
     }
 
@@ -67,6 +79,7 @@ export const authService = {
       isEmailVerified: false,
       tokenVersion: 0,
     });
+    logger.info('User created during signup', { userId: user._id.toString() });
 
     return this.issueSessionTokens(
       user._id.toString(),
@@ -78,13 +91,17 @@ export const authService = {
     );
   },
 
+  /** Authenticates user credentials and issues session tokens. */
   async login(input: LoginInput, meta?: RequestMeta) {
     const email = normalizeEmail(input.email);
+    logger.info('Auth service login started', { email: maskEmail(email) });
 
-    // passwordHash is select:false in schema, so explicit select is required.
     const user = await UserModel.findOne({ email }).select('+passwordHash');
 
     if (!user || !user.passwordHash) {
+      logger.warn('Login failed: user not found or password hash missing', {
+        email: maskEmail(email),
+      });
       throw ErrorFactory.unauthorized(
         'Invalid email or password',
         'ERR_INVALID_CREDENTIALS'
@@ -93,11 +110,13 @@ export const authService = {
 
     const passwordMatches = await bcrypt.compare(input.password, user.passwordHash);
     if (!passwordMatches) {
+      logger.warn('Login failed: password mismatch', { email: maskEmail(email) });
       throw ErrorFactory.unauthorized(
         'Invalid email or password',
         'ERR_INVALID_CREDENTIALS'
       );
     }
+    logger.info('Login credentials verified', { userId: user._id.toString() });
 
     return this.issueSessionTokens(
       user._id.toString(),
@@ -109,9 +128,11 @@ export const authService = {
     );
   },
 
+  /** Rotates refresh token by revoking the current session and creating a new one. */
   async refresh(refreshToken: string, meta?: RequestMeta) {
     const payload = verifyRefreshToken(refreshToken);
     const refreshTokenHash = hashRefreshToken(refreshToken);
+    logger.info('Refresh token verified', { userId: payload.userId, sessionId: payload.sessionId });
 
     const activeSession = await SessionModel.findOne({
       _id: payload.sessionId,
@@ -122,6 +143,10 @@ export const authService = {
     });
 
     if (!activeSession) {
+      logger.warn('Refresh failed: active session not found', {
+        userId: payload.userId,
+        sessionId: payload.sessionId,
+      });
       throw ErrorFactory.unauthorized(
         'Invalid refresh token',
         'ERR_INVALID_REFRESH_TOKEN'
@@ -130,14 +155,17 @@ export const authService = {
 
     const user = await UserModel.findById(payload.userId);
     if (!user || user.tokenVersion !== payload.tokenVersion) {
+      logger.warn('Refresh failed: user missing or token version mismatch', {
+        userId: payload.userId,
+      });
       throw ErrorFactory.unauthorized('Session is no longer valid', 'ERR_SESSION_INVALID');
     }
 
-    // Revoke old refresh token session before issuing new one.
     await SessionModel.updateOne(
       { _id: activeSession._id },
       { $set: { revokedAt: new Date() } }
     );
+    logger.info('Previous refresh session revoked', { sessionId: activeSession._id.toString() });
 
     return this.issueSessionTokens(
       user._id.toString(),
@@ -149,21 +177,27 @@ export const authService = {
     );
   },
 
+  /** Revokes the active refresh session tied to the provided token hash. */
   async logout(refreshToken: string) {
     const refreshTokenHash = hashRefreshToken(refreshToken);
+    logger.info('Logout token revocation requested');
 
     await SessionModel.updateOne(
       { refreshTokenHash, revokedAt: { $exists: false } },
       { $set: { revokedAt: new Date() } }
     );
+    logger.info('Logout token revocation completed');
   },
 
+  /** Returns authenticated user profile data. */
   async me(userId: string) {
+    logger.info('Fetching authenticated user profile', { userId });
     const user = await UserModel.findById(userId);
     if (!user) throw ErrorFactory.notFound('User', userId);
     return toPublicUser(user);
   },
 
+  /** Creates persisted session record and signs access/refresh tokens. */
   async issueSessionTokens(
     userId: string,
     meta: RequestMeta | undefined,
@@ -172,7 +206,7 @@ export const authService = {
     tokenVersion: number,
     userDoc: any
   ) {
-    // Create a temporary record first to get sessionId for refresh token claims.
+    logger.info('Issuing session tokens', { userId });
     const session = await SessionModel.create({
       userId,
       refreshTokenHash: 'pending',
@@ -189,6 +223,7 @@ export const authService = {
 
     session.refreshTokenHash = hashRefreshToken(refreshToken);
     await session.save();
+    logger.info('Refresh session persisted', { sessionId: session._id.toString() });
 
     const accessToken = signAccessToken({
       userId,
@@ -196,6 +231,7 @@ export const authService = {
       role,
       tokenVersion,
     });
+    logger.info('Access token issued', { userId });
 
     return {
       user: toPublicUser(userDoc),
@@ -204,4 +240,3 @@ export const authService = {
     };
   },
 };
-

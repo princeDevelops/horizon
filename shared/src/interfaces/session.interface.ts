@@ -1,3 +1,4 @@
+/** Persisted refresh session contract. */
 export interface Session {
   userId: string;
   refreshTokenHash: string;

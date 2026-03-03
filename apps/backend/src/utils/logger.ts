@@ -7,6 +7,10 @@ const colorizer = winston.format.colorize();
 
 const loggerFileName = path.basename(__filename).replace(/\\/g, '/');
 
+
+/**
+ * Extracts the first non-internal callsite from a stack trace for log metadata.
+ */
 const extractCaller = (stack?: string): string | undefined => {
   if (!stack) {
     return undefined;
@@ -37,6 +41,10 @@ const extractCaller = (stack?: string): string | undefined => {
   return undefined;
 };
 
+
+/**
+ * Injects `caller` metadata when it is missing from the log payload.
+ */
 const addCallerFormat = winston.format((info) => {
   if (!info.caller) {
     const traceHolder: { stack?: string } = {};
@@ -46,6 +54,9 @@ const addCallerFormat = winston.format((info) => {
   return info;
 });
 
+/**
+ * Renders console logs with timestamp, level, caller, message and inspected metadata.
+ */
 const consoleFormat = winston.format.printf(
   ({ timestamp, level, message, stack, caller, ...meta }) => {
     const ts = timestamp ? `[${timestamp}]` : '';

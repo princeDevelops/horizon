@@ -6,12 +6,12 @@ import {
 import { TaskModel, type TaskDocument } from '../models/task.model';
 
 export const taskRepository = {
-  // creating a task in DB
+  /** Persists a new task document. */
   async createTask(input: CreateTaskInput): Promise<TaskDocument> {
     return await TaskModel.create(input);
   },
 
-  // deleting a task from DB
+  /** Deletes a task by id scoped to the given user. */
   async deleteTask(
     input: DeleteTaskInput,
     userId: string
@@ -19,7 +19,7 @@ export const taskRepository = {
     return await TaskModel.findOneAndDelete({ _id: input.id, userId });
   },
 
-  // updating a task in DB
+  /** Updates a task and optionally unsets `finishedAt`. */
   async updateTask(
     input: UpdateTaskInput,
     userId: string,
@@ -42,12 +42,12 @@ export const taskRepository = {
     });
   },
 
-  // find a task by id
+  /** Finds a task by id scoped to the given user. */
   async findTaskById(id: string, userId: string): Promise<TaskDocument | null> {
     return await TaskModel.findOne({ _id: id, userId });
   },
 
-  // deleting selected tasks from DB -> returning count and list of deleted tasks
+  /** Deletes multiple tasks and returns deleted count with deleted docs. */
   async deleteSelectedTasks(
     ids: DeleteTaskInput[],
     userId: string
@@ -61,6 +61,7 @@ export const taskRepository = {
     return { deletedCount: result.deletedCount || 0, deletedTasks };
   },
 
+  /** Bulk-updates archive/pin flags and returns update stats with refreshed tasks. */
   async bulkUpdateTaskFlags(
     ids: string[],
     userId: string,

@@ -1,5 +1,6 @@
 import { type Tag, type TaskPriority, type TaskStatus } from '../types';
 
+/** Payload contract for partial task updates. */
 export interface UpdateTaskInput {
   id: string;
   title?: string;

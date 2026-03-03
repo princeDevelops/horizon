@@ -1,9 +1,14 @@
 import { ErrorFactory } from '../../api/errors/errors';
 import { isNonEmptyString } from './common.validation';
 
+/** Validates and normalizes an email address. */
 export const validateEmailOrThrow = (email: unknown): string => {
   if (!isNonEmptyString(email)) {
-    throw ErrorFactory.validation('Email is required', 'email', 'ERR_EMAIL_REQUIRED');
+    throw ErrorFactory.validation(
+      'Email is required',
+      'email',
+      'ERR_EMAIL_REQUIRED'
+    );
   }
 
   const normalizedEmail = email.trim().toLowerCase();
@@ -20,6 +25,7 @@ export const validateEmailOrThrow = (email: unknown): string => {
   return normalizedEmail;
 };
 
+/** Validates password shape and returns a trimmed value. */
 export const validatePasswordOrThrow = (password: unknown): string => {
   if (!isNonEmptyString(password)) {
     throw ErrorFactory.validation(
@@ -41,14 +47,20 @@ export const validatePasswordOrThrow = (password: unknown): string => {
   return normalizedPassword;
 };
 
+/** Validates and trims a user display name. */
 export const validateNameOrThrow = (name: unknown): string => {
   if (!isNonEmptyString(name)) {
-    throw ErrorFactory.validation('Name is required', 'name', 'ERR_NAME_REQUIRED');
+    throw ErrorFactory.validation(
+      'Name is required',
+      'name',
+      'ERR_NAME_REQUIRED'
+    );
   }
 
   return name.trim();
 };
 
+/** Validates a refresh token received from cookie or request body. */
 export const validateRefreshTokenOrThrow = (token: unknown): string => {
   if (!isNonEmptyString(token)) {
     throw ErrorFactory.unauthorized(
@@ -60,6 +72,7 @@ export const validateRefreshTokenOrThrow = (token: unknown): string => {
   return token.trim();
 };
 
+/** Validates the OAuth authorization code from callback query params. */
 export const validateOAuthCodeOrThrow = (code: unknown): string => {
   if (!isNonEmptyString(code)) {
     throw ErrorFactory.badRequest(
@@ -71,11 +84,14 @@ export const validateOAuthCodeOrThrow = (code: unknown): string => {
   return code.trim();
 };
 
+/** Validates OAuth `state` used for CSRF protection. */
 export const validateOAuthStateOrThrow = (state: unknown): string => {
   if (!isNonEmptyString(state)) {
-    throw ErrorFactory.unauthorized('Invalid OAuth state', 'ERR_INVALID_OAUTH_STATE');
+    throw ErrorFactory.unauthorized(
+      'Invalid OAuth state',
+      'ERR_INVALID_OAUTH_STATE'
+    );
   }
 
   return state.trim();
 };
-

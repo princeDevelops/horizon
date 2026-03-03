@@ -1,4 +1,4 @@
-// Base Error Class
+/** Base application error with HTTP semantics. */
 export class AppError extends Error {
   public statusCode: number;
   public isOperational: boolean;
@@ -14,6 +14,7 @@ export class AppError extends Error {
     Object.setPrototypeOf(this, AppError.prototype);
   }
 
+  /** Returns a serializable error payload. */
   toJSON() {
     return {
       message: this.message,
@@ -24,11 +25,7 @@ export class AppError extends Error {
   }
 }
 
-// ============================================================
-// 4xx CLIENT ERRORS
-// ============================================================
-
-// 400 - Invalid input format
+/** 400 validation error. */
 export class ValidationError extends AppError {
   public field?: string;
   public code: string;
@@ -43,7 +40,7 @@ export class ValidationError extends AppError {
   }
 }
 
-// 400 - Malformed request
+/** 400 bad request error. */
 export class BadRequestError extends AppError {
   public code: string;
 
@@ -56,7 +53,7 @@ export class BadRequestError extends AppError {
   }
 }
 
-// 401 - Authentication required or failed
+/** 401 unauthorized error. */
 export class UnauthorizedError extends AppError {
   public code: string;
 
@@ -69,7 +66,7 @@ export class UnauthorizedError extends AppError {
   }
 }
 
-// 403 - User lacks permission
+/** 403 forbidden error. */
 export class ForbiddenError extends AppError {
   public requiredRole?: string;
 
@@ -85,7 +82,7 @@ export class ForbiddenError extends AppError {
   }
 }
 
-// 404 - Resource doesn't exist
+/** 404 not found error. */
 export class NotFoundError extends AppError {
   public resourceType?: string;
   public resourceId?: string;
@@ -104,7 +101,7 @@ export class NotFoundError extends AppError {
   }
 }
 
-// 409 - Duplicate or conflicting resource
+/** 409 conflict error. */
 export class ConflictError extends AppError {
   public code: string;
 
@@ -117,7 +114,7 @@ export class ConflictError extends AppError {
   }
 }
 
-// 422 - Business logic violation
+/** 422 unprocessable entity error. */
 export class UnprocessableEntityError extends AppError {
   public code: string;
 
@@ -130,7 +127,7 @@ export class UnprocessableEntityError extends AppError {
   }
 }
 
-// 429 - Rate limit exceeded
+/** 429 too many requests error. */
 export class TooManyRequestsError extends AppError {
   public retryAfter?: number;
 
@@ -143,11 +140,7 @@ export class TooManyRequestsError extends AppError {
   }
 }
 
-// ============================================================
-// 5xx SERVER ERRORS
-// ============================================================
-
-// 500 - Unexpected server error
+/** 500 internal server error. */
 export class InternalServerError extends AppError {
   public errorId?: string;
 
@@ -163,7 +156,7 @@ export class InternalServerError extends AppError {
   }
 }
 
-// 503 - External service unavailable
+/** 503 service unavailable error. */
 export class ServiceUnavailableError extends AppError {
   public service?: string;
   public retryAfter?: number;
@@ -182,11 +175,7 @@ export class ServiceUnavailableError extends AppError {
   }
 }
 
-// ============================================================
-// PROGRAMMING ERRORS (Non-Operational)
-// ============================================================
-
-// Code bug - should never happen in production
+/** Non-operational programming error used for unexpected code defects. */
 export class ProgrammingError extends AppError {
   constructor(message: string) {
     super(message, 500, false);
@@ -196,27 +185,29 @@ export class ProgrammingError extends AppError {
   }
 }
 
-// ============================================================
-// ERROR FACTORY
-// ============================================================
-
+/** Factory helpers for consistent error construction across layers. */
 export class ErrorFactory {
+  /** Creates a validation error. */
   static validation(message: string, field?: string, code?: string) {
     return new ValidationError(message, field, code);
   }
 
+  /** Creates a bad request error. */
   static badRequest(message: string, code?: string) {
     return new BadRequestError(message, code);
   }
 
+  /** Creates an unauthorized error. */
   static unauthorized(message?: string, code?: string) {
     return new UnauthorizedError(message, code);
   }
 
+  /** Creates a forbidden error. */
   static forbidden(message?: string, requiredRole?: string) {
     return new ForbiddenError(message, requiredRole);
   }
 
+  /** Creates a not-found error for a named resource. */
   static notFound(resourceType: string, resourceId?: string) {
     const message = resourceId
       ? `${resourceType} with id '${resourceId}' not found`
@@ -224,22 +215,27 @@ export class ErrorFactory {
     return new NotFoundError(message, resourceType, resourceId);
   }
 
+  /** Creates a conflict error. */
   static conflict(message: string, code?: string) {
     return new ConflictError(message, code);
   }
 
+  /** Creates an unprocessable-entity error. */
   static unprocessable(message: string, code?: string) {
     return new UnprocessableEntityError(message, code);
   }
 
+  /** Creates a rate-limit error. */
   static tooManyRequests(retryAfter?: number) {
     return new TooManyRequestsError('Too many requests, please try again later', retryAfter);
   }
 
+  /** Creates an internal server error. */
   static internalServer(message?: string, errorId?: string) {
     return new InternalServerError(message, errorId);
   }
 
+  /** Creates a service-unavailable error. */
   static serviceUnavailable(service?: string, retryAfter?: number) {
     return new ServiceUnavailableError(
       `${service || 'Service'} is temporarily unavailable`,
@@ -248,6 +244,7 @@ export class ErrorFactory {
     );
   }
 
+  /** Creates a programming error. */
   static programming(message: string) {
     return new ProgrammingError(message);
   }

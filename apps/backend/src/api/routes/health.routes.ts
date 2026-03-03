@@ -3,11 +3,10 @@ import { healthLive, healthReady } from '../controllers/health.controller';
 
 const healthRoutes = Router();
 
-// Liveness: process is up.
+/** Liveness probe endpoint. */
 healthRoutes.get('/', healthLive);
 
-// Readiness: dependencies are healthy (DB, etc.).
+/** Readiness probe endpoint. */
 healthRoutes.get('/ready', healthReady);
 
 export default healthRoutes;
-

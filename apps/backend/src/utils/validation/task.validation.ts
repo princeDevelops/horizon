@@ -17,8 +17,12 @@ import {
   isValidMongoId,
 } from './common.validation';
 
+
+/** Controls validation rules for task creation vs. partial update. */
 type TaskValidationMode = 'create' | 'update';
 
+
+/** Parses an ISO date string and throws a field-specific validation error on failure. */
 const parseDateOrThrow = (
   value: unknown,
   field: 'startDate' | 'dueDate'
@@ -32,7 +36,6 @@ const parseDateOrThrow = (
         : 'ERR_DUE_DATE_INVALID_TYPE'
     );
   }
-
   if (value.trim().length === 0) {
     throw ErrorFactory.validation(
       `${field} cannot be empty`,
@@ -40,9 +43,7 @@ const parseDateOrThrow = (
       field === 'startDate' ? 'ERR_START_DATE_EMPTY' : 'ERR_DUE_DATE_EMPTY'
     );
   }
-
   const parsedDate = new Date(value);
-
   if (Number.isNaN(parsedDate.getTime())) {
     throw ErrorFactory.validation(
       `${field} must be a valid ISO 8601 date string`,
@@ -50,18 +51,20 @@ const parseDateOrThrow = (
       field === 'startDate' ? 'ERR_START_DATE_INVALID' : 'ERR_DUE_DATE_INVALID'
     );
   }
-
   return parsedDate;
 };
 
-const validateDateOrderOrThrow = (startDate?: string, dueDate?: string): void => {
+
+/** Ensures startDate is not later than dueDate when both are provided. */
+const validateDateOrderOrThrow = (
+  startDate?: string,
+  dueDate?: string
+): void => {
   if (!hasValue(startDate) || !hasValue(dueDate)) {
     return;
   }
-
   const parsedStartDate = parseDateOrThrow(startDate, 'startDate');
   const parsedDueDate = parseDateOrThrow(dueDate, 'dueDate');
-
   if (parsedStartDate.getTime() > parsedDueDate.getTime()) {
     throw ErrorFactory.validation(
       'startDate must be less than or equal to dueDate',
@@ -71,11 +74,16 @@ const validateDateOrderOrThrow = (startDate?: string, dueDate?: string): void =>
   }
 };
 
+
+/** Validates a task id as a non-empty Mongo ObjectId string. */
 export const validateTaskIdOrThrow = (id: string): void => {
   if (!isNonEmptyString(id)) {
-    throw ErrorFactory.validation('Task ID is required', 'id', 'ERR_TASK_ID_REQUIRED');
+    throw ErrorFactory.validation(
+      'Task ID is required',
+      'id',
+      'ERR_TASK_ID_REQUIRED'
+    );
   }
-
   if (!isValidMongoId(id)) {
     throw ErrorFactory.validation(
       'Invalid task ID format',
@@ -85,6 +93,8 @@ export const validateTaskIdOrThrow = (id: string): void => {
   }
 };
 
+
+/** Validates task payload fields for create/update flows. */
 export const validateTaskInputOrThrow = (
   input: CreateTaskInput | UpdateTaskInput,
   mode: TaskValidationMode
@@ -115,7 +125,11 @@ export const validateTaskInputOrThrow = (
   }
 
   if (titleRequired && !isNonEmptyString(input.title)) {
-    throw ErrorFactory.validation('Title is required', 'title', 'ERR_TITLE_REQUIRED');
+    throw ErrorFactory.validation(
+      'Title is required',
+      'title',
+      'ERR_TITLE_REQUIRED'
+    );
   }
 
   if (hasValue(input.title)) {
@@ -128,7 +142,11 @@ export const validateTaskInputOrThrow = (
     }
 
     if (input.title.trim().length === 0) {
-      throw ErrorFactory.validation('Title cannot be empty', 'title', 'ERR_TITLE_EMPTY');
+      throw ErrorFactory.validation(
+        'Title cannot be empty',
+        'title',
+        'ERR_TITLE_EMPTY'
+      );
     }
 
     if (input.title.length < TASK_CONSTRAINTS.TITLE_MIN_LENGTH) {
@@ -204,7 +222,11 @@ export const validateTaskInputOrThrow = (
     parsedDueDate = parseDateOrThrow(input.dueDate, 'dueDate');
   }
 
-  if (mode === 'create' && parsedDueDate && parsedDueDate.getTime() < Date.now()) {
+  if (
+    mode === 'create' &&
+    parsedDueDate &&
+    parsedDueDate.getTime() < Date.now()
+  ) {
     throw ErrorFactory.validation(
       'dueDate cannot be in the past for new tasks',
       'dueDate',
@@ -300,11 +322,14 @@ export const validateTaskInputOrThrow = (
     );
   }
 };
-
-export const validateTaskDateRangeOrThrow = (startDate?: string, dueDate?: string): void => {
+/** Public wrapper for validating task date order. */
+export const validateTaskDateRangeOrThrow = (
+  startDate?: string,
+  dueDate?: string
+): void => {
   validateDateOrderOrThrow(startDate, dueDate);
 };
-
+/** Validates and de-duplicates a non-empty list of task ids. */
 export const validateTaskIdsOrThrow = (ids: unknown): string[] => {
   if (!Array.isArray(ids) || ids.length === 0) {
     throw ErrorFactory.validation(
@@ -313,7 +338,6 @@ export const validateTaskIdsOrThrow = (ids: unknown): string[] => {
       'ERR_TASK_IDS_REQUIRED'
     );
   }
-
   if (!ids.every((id) => typeof id === 'string')) {
     throw ErrorFactory.validation(
       'all ids must be strings',
@@ -321,9 +345,7 @@ export const validateTaskIdsOrThrow = (ids: unknown): string[] => {
       'ERR_TASK_IDS_INVALID_TYPE'
     );
   }
-
   const trimmedIds = ids.map((id) => id.trim()).filter((id) => id.length > 0);
-
   if (trimmedIds.length === 0) {
     throw ErrorFactory.validation(
       'ids must contain at least one valid task id',
@@ -331,9 +353,7 @@ export const validateTaskIdsOrThrow = (ids: unknown): string[] => {
       'ERR_TASK_IDS_REQUIRED'
     );
   }
-
   trimmedIds.forEach((id) => validateTaskIdOrThrow(id));
-
   return Array.from(new Set(trimmedIds));
 };
 

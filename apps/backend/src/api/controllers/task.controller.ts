@@ -18,17 +18,16 @@ import { TaskFilters } from '../../utils/task.filters';
 import { ErrorFactory } from '../errors/errors';
 import { taskService } from '../services/task.service';
 
+/** Returns authenticated user claims or throws `401`. */
 const getAuthenticatedUserOrThrow = (req: Request) => {
   if (!req.user) throw ErrorFactory.unauthorized('Authentication required');
   return req.user;
 };
 
-// creating a task
-
+/** Creates a task for the current authenticated user. */
 export const createTask = asyncHandler(async (req: Request, res: Response) => {
   const authUser = getAuthenticatedUserOrThrow(req);
 
-  // We always trust userId from token, not from request body.
   const input: CreateTaskInput = {
     ...req.body,
     userId: authUser.userId,
@@ -37,10 +36,8 @@ export const createTask = asyncHandler(async (req: Request, res: Response) => {
   validateTaskInputOrThrow(input, 'create');
 
   logger.info('Creating task with input', { input });
-  // Create task
   const task = await taskService.createTask(input, authUser.userId);
 
-  // Send response
   res.status(201).json({
     success: true,
     message: 'Task created successfully',
@@ -48,7 +45,7 @@ export const createTask = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-// Getting all tasks
+/** Fetches tasks for the current user using query-based filters and pagination. */
 export const getAllTasks = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const authUser = getAuthenticatedUserOrThrow(req);
@@ -69,7 +66,6 @@ export const getAllTasks = asyncHandler(
       limit,
     });
 
-    // log the tasks
     logger.info('Fetched all tasks', { tasks: tasks });
 
     res.status(200).json({
@@ -80,7 +76,7 @@ export const getAllTasks = asyncHandler(
   }
 );
 
-// deleting a task by id
+/** Deletes a task by id for the current user. */
 export const deleteTask = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const authUser = getAuthenticatedUserOrThrow(req);
@@ -104,7 +100,7 @@ export const deleteTask = asyncHandler(
   }
 );
 
-// updating a task by id
+/** Updates a task by id for the current user. */
 export const updateTask = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const authUser = getAuthenticatedUserOrThrow(req);
@@ -130,7 +126,7 @@ export const updateTask = asyncHandler(
   }
 );
 
-// deleting selected tasks by ids
+/** Deletes multiple tasks for the current user. */
 export const deleteSelectedTasks = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const authUser = getAuthenticatedUserOrThrow(req);
@@ -150,7 +146,7 @@ export const deleteSelectedTasks = asyncHandler(
   }
 );
 
-// bulk update task flags (archive/unarchive, pin/unpin)
+/** Bulk-updates archive/pin flags for the current user's tasks. */
 export const updateTaskFlagsBulk = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const authUser = getAuthenticatedUserOrThrow(req);

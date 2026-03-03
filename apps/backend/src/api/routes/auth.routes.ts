@@ -22,4 +22,3 @@ authRoutes.get('/oauth/:provider/start', oauthStart);
 authRoutes.get('/oauth/:provider/callback', oauthCallback);
 
 export default authRoutes;
-
