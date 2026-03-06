@@ -15,18 +15,17 @@ app.set('query parser', 'extended');
 app.use(cookieParser());
 app.use(helmet());
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
   : ['http://localhost:5173', 'http://localhost:5000'];
 
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(null, true);
-      }
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      logger.warn('CORS request blocked for disallowed origin', { origin });
+      return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
   })

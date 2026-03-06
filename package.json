@@ -2,7 +2,11 @@
   "name": "horizon",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["apps/backend", "apps/frontend", "shared"],
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend",
+    "shared"
+  ],
   "scripts": {
     "dev": "npm run build --workspace=shared && concurrently -k -n shared,backend,frontend -c magenta,blue,green \"npm run dev --workspace=shared\" \"npm run dev --workspace=apps/backend\" \"npm run dev --workspace=apps/frontend\"",
     "dev:backend": "npm run dev --workspace=apps/backend",

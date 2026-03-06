@@ -1,8 +1,4 @@
-import {
-  AUTH_PROVIDERS,
-  USER_ROLES,
-  type AuthProvider,
-} from '@horizon/shared';
+import { AUTH_PROVIDERS, USER_ROLES, type AuthProvider } from '@horizon/shared';
 import { ErrorFactory } from '../errors/errors';
 import { OAUTH_CONFIG } from '../config/oauth';
 import { authService } from './auth.service';
@@ -56,11 +52,18 @@ export const oauthService = {
       return { url: `${cfg.AUTH_URL}?${query.toString()}`, state: nextState };
     }
 
-    throw ErrorFactory.badRequest('Unsupported OAuth provider', 'ERR_UNSUPPORTED_PROVIDER');
+    throw ErrorFactory.badRequest(
+      'Unsupported OAuth provider',
+      'ERR_UNSUPPORTED_PROVIDER'
+    );
   },
 
   /** Exchanges provider callback code, upserts user, and issues app tokens. */
-  async handleCallback(provider: AuthProvider, code: string, meta?: RequestMeta) {
+  async handleCallback(
+    provider: AuthProvider,
+    code: string,
+    meta?: RequestMeta
+  ) {
     logger.info('Handling OAuth callback', { provider });
     const profile = await this.fetchProviderProfile(provider, code);
 
@@ -81,7 +84,8 @@ export const oauthService = {
     } else {
       const linkedProvider = user.providers.some(
         (item) =>
-          item.provider === provider && item.providerUserId === profile.providerUserId
+          item.provider === provider &&
+          item.providerUserId === profile.providerUserId
       );
 
       if (!linkedProvider) {
@@ -96,9 +100,12 @@ export const oauthService = {
       }
 
       if (!user.name && profile.name) user.name = profile.name;
-      if (!user.avatarUrl && profile.avatarUrl) user.avatarUrl = profile.avatarUrl;
+      if (!user.avatarUrl && profile.avatarUrl)
+        user.avatarUrl = profile.avatarUrl;
       await user.save();
-      logger.info('OAuth user profile updated', { userId: user._id.toString() });
+      logger.info('OAuth user profile updated', {
+        userId: user._id.toString(),
+      });
     }
 
     return authService.issueSessionTokens(
@@ -112,7 +119,10 @@ export const oauthService = {
   },
 
   /** Resolves provider-specific profile retrieval based on provider name. */
-  async fetchProviderProfile(provider: AuthProvider, code: string): Promise<OAuthProfile> {
+  async fetchProviderProfile(
+    provider: AuthProvider,
+    code: string
+  ): Promise<OAuthProfile> {
     logger.info('Fetching OAuth provider profile', { provider });
     if (provider === AUTH_PROVIDERS.GOOGLE) {
       return this.fetchGoogleProfile(code);
@@ -122,7 +132,10 @@ export const oauthService = {
       return this.fetchGithubProfile(code);
     }
 
-    throw ErrorFactory.badRequest('Unsupported OAuth provider', 'ERR_UNSUPPORTED_PROVIDER');
+    throw ErrorFactory.badRequest(
+      'Unsupported OAuth provider',
+      'ERR_UNSUPPORTED_PROVIDER'
+    );
   },
 
   /** Exchanges Google auth code for user profile details. */
@@ -144,13 +157,19 @@ export const oauthService = {
 
     if (!tokenRes.ok) {
       logger.warn('Google token exchange failed', { status: tokenRes.status });
-      throw ErrorFactory.unauthorized('Google token exchange failed', 'ERR_GOOGLE_TOKEN');
+      throw ErrorFactory.unauthorized(
+        'Google token exchange failed',
+        'ERR_GOOGLE_TOKEN'
+      );
     }
 
     const tokenData = (await tokenRes.json()) as { access_token?: string };
     if (!tokenData.access_token) {
       logger.warn('Google token exchange missing access token');
-      throw ErrorFactory.unauthorized('Google access token missing', 'ERR_GOOGLE_TOKEN');
+      throw ErrorFactory.unauthorized(
+        'Google access token missing',
+        'ERR_GOOGLE_TOKEN'
+      );
     }
 
     const profileRes = await fetch(cfg.USERINFO_URL, {
@@ -159,7 +178,10 @@ export const oauthService = {
 
     if (!profileRes.ok) {
       logger.warn('Google profile fetch failed', { status: profileRes.status });
-      throw ErrorFactory.unauthorized('Google profile fetch failed', 'ERR_GOOGLE_PROFILE');
+      throw ErrorFactory.unauthorized(
+        'Google profile fetch failed',
+        'ERR_GOOGLE_PROFILE'
+      );
     }
     logger.info('Google profile fetched successfully');
 
@@ -199,13 +221,19 @@ export const oauthService = {
 
     if (!tokenRes.ok) {
       logger.warn('GitHub token exchange failed', { status: tokenRes.status });
-      throw ErrorFactory.unauthorized('GitHub token exchange failed', 'ERR_GITHUB_TOKEN');
+      throw ErrorFactory.unauthorized(
+        'GitHub token exchange failed',
+        'ERR_GITHUB_TOKEN'
+      );
     }
 
     const tokenData = (await tokenRes.json()) as { access_token?: string };
     if (!tokenData.access_token) {
       logger.warn('GitHub token exchange missing access token');
-      throw ErrorFactory.unauthorized('GitHub access token missing', 'ERR_GITHUB_TOKEN');
+      throw ErrorFactory.unauthorized(
+        'GitHub access token missing',
+        'ERR_GITHUB_TOKEN'
+      );
     }
 
     const profileRes = await fetch(cfg.USERINFO_URL, {
@@ -217,7 +245,10 @@ export const oauthService = {
 
     if (!profileRes.ok) {
       logger.warn('GitHub profile fetch failed', { status: profileRes.status });
-      throw ErrorFactory.unauthorized('GitHub profile fetch failed', 'ERR_GITHUB_PROFILE');
+      throw ErrorFactory.unauthorized(
+        'GitHub profile fetch failed',
+        'ERR_GITHUB_PROFILE'
+      );
     }
     logger.info('GitHub profile fetched successfully');
 

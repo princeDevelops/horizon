@@ -4,6 +4,8 @@ dist
 *.tsbuildinfo
 .env
 .env.*
+!.env.example
+!**/.env.example
 .DS_Store
 *.d.ts
 *.d.ts.map
@@ -15,3 +17,4 @@ apps/backend/src/**/*.js.map
 apps/frontend/src/**/*.js
 apps/frontend/src/**/*.js.map
 apps/frontend/vite.config.js
+apps/*/package-lock.json

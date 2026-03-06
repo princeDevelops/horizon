@@ -1,0 +1,9 @@
+process.env.NODE_ENV = 'test';
+process.env.ACCESS_TOKEN_SECRET = 'test-access-secret';
+process.env.REFRESH_TOKEN_SECRET = 'test-refresh-secret';
+process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
+process.env.GOOGLE_CLIENT_SECRET = 'test-google-client-secret';
+process.env.GOOGLE_CALLBACK_URL = 'http://localhost:5000/api/v1/auth/oauth/google/callback';
+process.env.GITHUB_CLIENT_ID = 'test-github-client-id';
+process.env.GITHUB_CLIENT_SECRET = 'test-github-client-secret';
+process.env.GITHUB_CALLBACK_URL = 'http://localhost:5000/api/v1/auth/oauth/github/callback';
