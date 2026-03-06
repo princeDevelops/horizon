@@ -78,8 +78,6 @@ Required keys include:
 - `CORS_ORIGIN`
 - OAuth keys for Google/GitHub callbacks
 
-Never commit real secrets. Use placeholders in `.env.example` only.
-
 ## API Base URL
 - `http://localhost:5000/api/v1`
 
