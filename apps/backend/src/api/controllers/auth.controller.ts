@@ -176,7 +176,9 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 /** Returns the current authenticated user profile. */
 export const me = asyncHandler(async (req: Request, res: Response) => {
   const authUser = getAuthenticatedUserOrThrow(req);
-  logger.info('Profile requested by authenticated user', { userId: authUser.userId });
+  logger.info('Profile requested by authenticated user', {
+    userId: authUser.userId,
+  });
   const user = await authService.me(authUser.userId);
 
   res.status(200).json({
@@ -196,7 +198,9 @@ export const oauthStart = asyncHandler(async (req: Request, res: Response) => {
     provider !== AUTH_PROVIDERS.GOOGLE &&
     provider !== AUTH_PROVIDERS.GITHUB
   ) {
-    logger.warn('OAuth start rejected due to unsupported provider', { provider });
+    logger.warn('OAuth start rejected due to unsupported provider', {
+      provider,
+    });
     throw ErrorFactory.badRequest(
       'Unsupported OAuth provider',
       'ERR_UNSUPPORTED_PROVIDER'
@@ -228,7 +232,9 @@ export const oauthCallback = asyncHandler(
       provider !== AUTH_PROVIDERS.GOOGLE &&
       provider !== AUTH_PROVIDERS.GITHUB
     ) {
-      logger.warn('OAuth callback rejected due to unsupported provider', { provider });
+      logger.warn('OAuth callback rejected due to unsupported provider', {
+        provider,
+      });
       throw ErrorFactory.badRequest(
         'Unsupported OAuth provider',
         'ERR_UNSUPPORTED_PROVIDER'
@@ -261,7 +267,10 @@ export const oauthCallback = asyncHandler(
         ipAddress: req.ip,
       }
     );
-    logger.info('OAuth callback succeeded', { provider, userId: result.user.id });
+    logger.info('OAuth callback succeeded', {
+      provider,
+      userId: result.user.id,
+    });
 
     res.clearCookie('oauth_state');
     setRefreshTokenCookie(res, result.refreshToken);

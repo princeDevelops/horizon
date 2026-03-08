@@ -8,14 +8,18 @@ import healthRoutes from './routes/health.routes';
 import morgan from 'morgan';
 import { errorHandler } from './middleware/error-handler.middleware';
 import cookieParser from 'cookie-parser';
+import { globalApiLimiter } from './middleware/rate-limit.middleware';
 
 const app = express();
 
+app.set('trust proxy', 1);
 app.set('query parser', 'extended');
 app.use(cookieParser());
 app.use(helmet());
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
+  ? process.env.CORS_ORIGIN.split(',')
+      .map((o) => o.trim())
+      .filter(Boolean)
   : ['http://localhost:5173', 'http://localhost:5000'];
 
 app.use(
@@ -46,7 +50,7 @@ app.use(
 
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/tasks', taskRoutes);
+app.use('/api/v1/tasks', globalApiLimiter, taskRoutes);
 app.use(errorHandler);
 
 export default app;

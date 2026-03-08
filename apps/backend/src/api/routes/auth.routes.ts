@@ -9,12 +9,13 @@ import {
   signup,
 } from '../controllers/auth.controller';
 import { requireAuth } from '../middleware/auth.middleware';
+import { authStrictLimiter } from '../middleware/rate-limit.middleware';
 
 const authRoutes = Router();
 
-authRoutes.post('/signup', signup);
-authRoutes.post('/login', login);
-authRoutes.post('/refresh', refresh);
+authRoutes.post('/signup', authStrictLimiter, signup);
+authRoutes.post('/login', authStrictLimiter, login);
+authRoutes.post('/refresh', authStrictLimiter, refresh);
 authRoutes.post('/logout', logout);
 authRoutes.get('/me', requireAuth, me);
 
