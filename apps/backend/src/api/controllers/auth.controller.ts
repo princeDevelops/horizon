@@ -18,8 +18,10 @@ import {
 } from '../../utils/validation';
 import { ErrorFactory } from '../errors/errors';
 import { authService } from '../services/auth.service';
+import { cacheService } from '../services/cache.service';
 import { oauthService } from '../services/oauth.service';
 import { logger } from '../../utils/logger';
+import { cacheKeys } from '../../utils/cache-keys';
 
 /** Masks local part of email before writing to logs. */
 const maskEmail = (email: string): string => {
@@ -56,6 +58,8 @@ const clearRefreshTokenCookie = (res: Response): void => {
     path: AUTH_CONSTANTS.REFRESH_COOKIE_PATH,
   });
 };
+
+const AUTH_ME_TTL_SEC = Number(process.env.CACHE_TTL_AUTH_ME_SEC ?? 60);
 
 /** Handles user signup and returns access token + user profile. */
 export const signup = asyncHandler(async (req: Request, res: Response) => {
@@ -176,10 +180,27 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 /** Returns the current authenticated user profile. */
 export const me = asyncHandler(async (req: Request, res: Response) => {
   const authUser = getAuthenticatedUserOrThrow(req);
+  const cacheKey = cacheKeys.authMe(authUser.userId);
   logger.info('Profile requested by authenticated user', {
     userId: authUser.userId,
   });
+
+  const cachedUser = await cacheService.getJson(cacheKey);
+  if (cachedUser) {
+    logger.info('Auth profile cache hit', { userId: authUser.userId });
+    res.status(200).json({
+      success: true,
+      data: cachedUser,
+    });
+    return;
+  }
+
   const user = await authService.me(authUser.userId);
+  await cacheService.setJson(cacheKey, user, AUTH_ME_TTL_SEC);
+  logger.info('Auth profile cached', {
+    userId: authUser.userId,
+    ttlSec: AUTH_ME_TTL_SEC,
+  });
 
   res.status(200).json({
     success: true,
