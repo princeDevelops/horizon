@@ -5,7 +5,9 @@ Horizon is a TypeScript monorepo with a backend API, frontend client, and shared
 This repository is backend-first for interview/recruiter review:
 - Production-style Express API architecture (controllers/services/models/middleware)
 - JWT + refresh-session auth flow (local + OAuth providers)
+- OpenAPI/Swagger documentation for recruiter-friendly API exploration
 - Validation/error normalization patterns
+- Rate limiting, health probes, and cache-aware controller behavior
 - Basic reliability suite with Vitest + Supertest
 
 ## Tech Stack
@@ -32,6 +34,7 @@ This repository is backend-first for interview/recruiter review:
 - Node.js 20+
 - npm 10+
 - MongoDB running locally (default: `mongodb://localhost:27017/horizon`)
+- Redis running locally (default: `redis://localhost:6379`)
 
 ## Quick Start
 1. Install dependencies from repo root:
@@ -85,6 +88,17 @@ Health endpoints:
 - `GET /health`
 - `GET /health/ready`
 
+API documentation:
+- Swagger UI: `http://localhost:5000/api/v1/api-docs`
+- OpenAPI JSON: `http://localhost:5000/api/v1/api-docs.json`
+
+Auth flow:
+- `POST /auth/signup` and `POST /auth/login` return an access token in the JSON response
+- The backend also sets an HTTP-only refresh token cookie
+- Protected routes use `Authorization: Bearer <accessToken>`
+- `POST /auth/refresh` rotates the refresh cookie and returns a new access token
+- `POST /auth/logout` clears the refresh cookie
+
 ## Testing
 Backend uses Vitest and Supertest.
 
@@ -92,6 +106,7 @@ Current suite covers:
 - model validation/indexes (`SessionModel`)
 - middleware behavior (`requireAuth` unauthorized path)
 - health endpoint integration checks
+- controller cache behavior for `/auth/me` and `/tasks`
 - auth service failure-path unit tests
 
 Run:
@@ -103,3 +118,4 @@ npm run test --workspace=apps/backend
 - Backend is the primary focus for this project.
 - Frontend exists as a client workspace but the API architecture and backend quality are the core deliverables.
 - Project is organized for maintainability with explicit service and middleware boundaries.
+- Start with Swagger at `http://localhost:5000/api/v1/api-docs` to inspect the API contract, examples, auth flow, and error responses.
