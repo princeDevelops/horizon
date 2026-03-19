@@ -9,13 +9,14 @@ import morgan from 'morgan';
 import { errorHandler } from './middleware/error-handler.middleware';
 import cookieParser from 'cookie-parser';
 import { globalApiLimiter } from './middleware/rate-limit.middleware';
-
+import { registerSwagger } from './docs/swagger';
 const app = express();
 
 app.set('trust proxy', 1);
 app.set('query parser', 'extended');
 app.use(cookieParser());
 app.use(helmet());
+registerSwagger(app);
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',')
       .map((o) => o.trim())

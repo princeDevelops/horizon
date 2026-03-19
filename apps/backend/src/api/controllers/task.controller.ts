@@ -28,6 +28,21 @@ const getAuthenticatedUserOrThrow = (req: Request) => {
 
 const TASK_LIST_TTL_SEC = Number(process.env.CACHE_TTL_TASK_LIST_SEC ?? 30);
 
+const summarizeTaskInput = (
+  input: Partial<CreateTaskInput & UpdateTaskInput>
+) => ({
+  title: input.title,
+  status: input.status,
+  priority: input.priority,
+  hasDescription: typeof input.description === 'string' && input.description.length > 0,
+  hasDueDate: Boolean(input.dueDate),
+  hasStartDate: Boolean(input.startDate),
+  isArchived: input.isArchived,
+  isPinned: input.isPinned,
+  tagCount: input.tags?.length ?? 0,
+  customTagCount: input.customTags?.length ?? 0,
+});
+
 /** Creates a task for the current authenticated user. */
 export const createTask = asyncHandler(async (req: Request, res: Response) => {
   const authUser = getAuthenticatedUserOrThrow(req);
@@ -39,7 +54,10 @@ export const createTask = asyncHandler(async (req: Request, res: Response) => {
 
   validateTaskInputOrThrow(input, 'create');
 
-  logger.info('Creating task with input', { input });
+  logger.info('Creating task', {
+    userId: authUser.userId,
+    input: summarizeTaskInput(input),
+  });
   const task = await taskService.createTask(input, authUser.userId);
   await cacheService.deleteByPrefix(cacheKeys.taskListPrefix(authUser.userId));
 
@@ -92,7 +110,10 @@ export const getAllTasks = asyncHandler(
       limit,
     });
 
-    logger.info('Fetched all tasks', { tasks: tasks });
+    logger.info('Fetched all tasks', {
+      userId: authUser.userId,
+      count: tasks.length,
+    });
     await cacheService.setJson(taskListCacheKey, tasks, TASK_LIST_TTL_SEC);
 
     res.status(200).json({
@@ -118,7 +139,9 @@ export const deleteTask = asyncHandler(
 
     logger.info('Deleting task', { id: input.id });
     const deletedTask = await taskService.deleteTask(input, authUser.userId);
-    await cacheService.deleteByPrefix(cacheKeys.taskListPrefix(authUser.userId));
+    await cacheService.deleteByPrefix(
+      cacheKeys.taskListPrefix(authUser.userId)
+    );
 
     res.status(200).json({
       success: true,
@@ -143,10 +166,15 @@ export const updateTask = asyncHandler(
     validateTaskIdOrThrow(input.id);
     validateTaskInputOrThrow(input, 'update');
 
-    logger.info('Updating task', { id: input.id });
-    logger.info('Update payload', { input });
+    logger.info('Updating task', {
+      userId: authUser.userId,
+      id: input.id,
+      input: summarizeTaskInput(input),
+    });
     const updatedTask = await taskService.updateTask(input, authUser.userId);
-    await cacheService.deleteByPrefix(cacheKeys.taskListPrefix(authUser.userId));
+    await cacheService.deleteByPrefix(
+      cacheKeys.taskListPrefix(authUser.userId)
+    );
 
     res.status(200).json({
       success: true,
@@ -166,7 +194,9 @@ export const deleteSelectedTasks = asyncHandler(
 
     const { deletedCount, deletedTasks } =
       await taskService.deleteSelectedTasks(uniqueIds, authUser.userId);
-    await cacheService.deleteByPrefix(cacheKeys.taskListPrefix(authUser.userId));
+    await cacheService.deleteByPrefix(
+      cacheKeys.taskListPrefix(authUser.userId)
+    );
 
     res.status(200).json({
       success: true,
@@ -188,7 +218,9 @@ export const updateTaskFlagsBulk = asyncHandler(
 
     const { modifiedCount, updatedTasks } =
       await taskService.updateTaskFlagsBulk(input, authUser.userId);
-    await cacheService.deleteByPrefix(cacheKeys.taskListPrefix(authUser.userId));
+    await cacheService.deleteByPrefix(
+      cacheKeys.taskListPrefix(authUser.userId)
+    );
 
     res.status(200).json({
       success: true,

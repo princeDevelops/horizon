@@ -12,7 +12,7 @@
     "dev:backend": "npm run dev --workspace=apps/backend",
     "dev:frontend": "npm run dev --workspace=apps/frontend",
     "dev:shared": "npm run dev --workspace=shared",
-    "build": "npm run build --workspace=shared && npm run build --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
