@@ -6,16 +6,13 @@ import { connectRedis } from './api/config/redis';
 
 const PORT = process.env.PORT || 5000;
 
-/** Starts HTTP server and initializes database connection in the background. */
+/** Starts required dependencies before accepting HTTP traffic. */
 const bootstrap = async () => {
   try {
+    await connectDB();
+
     app.listen(PORT, () => {
       logger.info(`Horizon Server is running on port ${PORT}`);
-    });
-
-    connectDB().catch((error) => {
-      logger.error('Failed to connect to MongoDB:', error);
-      logger.warn('Server is running but database is not connected');
     });
 
     connectRedis().catch((error) => {

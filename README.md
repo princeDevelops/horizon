@@ -1,14 +1,16 @@
 # Horizon Monorepo
 
-Horizon is a TypeScript monorepo with a backend API, frontend client, and shared domain package.
+Horizon is a backend-focused TypeScript monorepo built to showcase API design, authentication, validation, and maintainable service architecture.
 
-This repository is backend-first for interview/recruiter review:
+This repository is intentionally backend-first for interview/recruiter review:
 - Production-style Express API architecture (controllers/services/models/middleware)
 - JWT + refresh-session auth flow (local + OAuth providers)
 - OpenAPI/Swagger documentation for recruiter-friendly API exploration
 - Validation/error normalization patterns
 - Rate limiting, health probes, and cache-aware controller behavior
 - Basic reliability suite with Vitest + Supertest
+
+The frontend workspace is included only as a supporting client shell. The backend API, shared contracts, and operational structure are the primary deliverables in this project.
 
 ## Tech Stack
 - Backend: Node.js, Express 5, TypeScript, Mongoose, JWT, Winston
@@ -56,7 +58,7 @@ Copy-Item apps/backend/.env.example apps/backend/.env
 npm run dev
 ```
 
-This runs shared build/watch + backend + frontend concurrently.
+This runs shared build/watch, the backend API, and the supporting frontend workspace concurrently.
 
 ## Important Scripts
 From repo root:
@@ -116,6 +118,7 @@ npm run test --workspace=apps/backend
 
 ## Notes For Recruiters
 - Backend is the primary focus for this project.
-- Frontend exists as a client workspace but the API architecture and backend quality are the core deliverables.
+- Frontend exists as a supporting workspace; evaluation should focus on the backend API architecture and engineering quality.
 - Project is organized for maintainability with explicit service and middleware boundaries.
+- MongoDB is treated as a required dependency at startup; Redis caching is optional and degrades gracefully when unavailable.
 - Start with Swagger at `http://localhost:5000/api/v1/api-docs` to inspect the API contract, examples, auth flow, and error responses.
